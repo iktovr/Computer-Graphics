@@ -1,0 +1,7 @@
+*.glade~
+
+*.user
+.idea/
+[Bb]in/
+[Oo]bj/
+[Pp]ackages/
