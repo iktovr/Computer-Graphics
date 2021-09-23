@@ -161,6 +161,9 @@ namespace lab1
             var cr = args.Cr;
             cr.Antialias = Antialias.Subpixel;
             
+            cr.SetSourceRGB(1, 0.98, 0.94);
+            cr.Paint();
+            
             DrawAxis(cr);
             DrawRotationCenter(cr);
             
@@ -185,7 +188,7 @@ namespace lab1
         private void DrawAxis(Context cr)
         {
             cr.SetSourceRGB(0.6, 0.6, 0.6);
-
+            
             var halfX = _canvasSize.X / 2 - _shiftX.Value * _scale.Value;
             var halfY = _canvasSize.Y / 2 + _shiftY.Value * _scale.Value;
             cr.MoveTo(0, halfY);
