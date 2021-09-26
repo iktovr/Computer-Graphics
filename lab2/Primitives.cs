@@ -126,12 +126,12 @@ namespace Primitives
             };
             polygons = new List<Polygon>
             {
-                new Polygon(vertices[0], vertices[1], vertices[2], vertices[3]),
-                new Polygon(vertices[7], vertices[6], vertices[5], vertices[4]),
-                new Polygon(vertices[1], vertices[0], vertices[4], vertices[5]),
-                new Polygon(vertices[2], vertices[1], vertices[5], vertices[6]),
-                new Polygon(vertices[3], vertices[2], vertices[6], vertices[7]),
-                new Polygon(vertices[0], vertices[3], vertices[7], vertices[4]),
+                new Polygon(vertices[0], vertices[1], vertices[2], vertices[3], new Vector3(1, 1, 1)),
+                new Polygon(vertices[7], vertices[6], vertices[5], vertices[4], new Vector3(1, 1, 0)),
+                new Polygon(vertices[1], vertices[0], vertices[4], vertices[5], new Vector3(1, 0.63f, 0)),
+                new Polygon(vertices[2], vertices[1], vertices[5], vertices[6], new Vector3(0, 0, 1)),
+                new Polygon(vertices[3], vertices[2], vertices[6], vertices[7], new Vector3(1, 0, 0)),
+                new Polygon(vertices[0], vertices[3], vertices[7], vertices[4], new Vector3(0, 1, 0)),
             };
         }
         

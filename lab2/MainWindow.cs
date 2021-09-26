@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Cairo;
 using Gtk;
 using UI = Gtk.Builder.ObjectAttribute;
 
@@ -26,6 +27,7 @@ namespace lab2
         [UI] private Adjustment _zShift = null;
         [UI] private CheckButton _zBuffer = null;
         [UI] private CheckButton _wireframe = null;
+        [UI] private CheckButton _hideInvisible = null;
         [UI] private ComboBoxText _colors = null;
         [UI] private ComboBoxText _models = null;
 
@@ -37,6 +39,7 @@ namespace lab2
         private Vector2 _pointerPos;
         private int _pointerButton = -1;
         private bool _fillPolygons = true;
+        private FileChooserDialog _fileChooser;
 
         private readonly Cairo.Color BACKGROUND_COLOR = new Cairo.Color(1, 0.98, 0.94);
         private readonly Cairo.Color LINE_COLOR = new Cairo.Color(0, 0, 0);
@@ -105,6 +108,7 @@ namespace lab2
 
             _zBuffer.Toggled += (o, args) => { TransformToWorld(); _canvas.QueueDraw(); };
             _wireframe.Toggled += (o, args) => { _canvas.QueueDraw(); };
+            _hideInvisible.Toggled += (o, args) => { _canvas.QueueDraw(); };
 
             _colors.Changed += (o, args) =>
             {
@@ -125,13 +129,39 @@ namespace lab2
                 }
                 _canvas.QueueDraw();
             };
+            
+            _fileChooser = new FileChooserDialog("Choose .obj file", (Window) this.Toplevel, 
+                FileChooserAction.Open, 
+                "Cancel", ResponseType.Cancel, "Open", ResponseType.Accept);
+            var filter = new FileFilter();
+            filter.Name = ".obj";
+            filter.AddPattern("*.obj");
+            _fileChooser.AddFilter(filter);
 
             _models.Changed += (o, args) =>
             {
-                if (_models.ActiveText == "Cube")
+                if (_models.Active == -1)
+                    return;
+                
+                if (_models.Active == 0)
+                {
+                    ResponseType response = (ResponseType) _fileChooser.Run();
+                    if (response == ResponseType.Accept)
+                    {
+                        PrimitiveForms.LoadFromObj(_fileChooser.Filename, ref _vertices, ref _polygons);
+                        TransformToWorld();
+                        _canvas.QueueDraw();
+                    }
+                    // Destroy ломает программу
+                    _fileChooser.Hide();
+                    _models.Active = -1;
+                }
+                else if (_models.ActiveText == "Cube")
                     PrimitiveForms.Cube(ref _vertices, ref _polygons);
                 else if (_models.ActiveText == "Octahedron")
                     PrimitiveForms.Octahedron(ref _vertices, ref _polygons);
+            
+                _colors.Active = _colors.Active;
                 TransformToWorld();
                 _canvas.QueueDraw();
             };
@@ -203,6 +233,9 @@ namespace lab2
         private void CanvasDrawnHandler(object o, DrawnArgs args)
         {
             var cr = args.Cr;
+            cr.Antialias = Antialias.Subpixel;
+            cr.LineJoin = LineJoin.Bevel; // чинит острые концы у линий при маленьком увеличении
+            
             cr.SetSourceColor(BACKGROUND_COLOR);
             cr.Paint();
             
@@ -210,7 +243,7 @@ namespace lab2
             var viewDirection = new Vector4(0, 0, 1, 0);
             foreach (var polygon in _polygons)
             {
-                if (Vector4.Dot(polygon.NormalInWorld, viewDirection) < 0)
+                if (Vector4.Dot(polygon.NormalInWorld, viewDirection) < 0 && _hideInvisible.Active)
                     continue;
                 
                 cr.SetSourceColor(LINE_COLOR);
