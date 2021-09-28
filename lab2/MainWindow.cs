@@ -30,6 +30,7 @@ namespace lab2
         [UI] private CheckButton _hideInvisible = null;
         [UI] private ComboBoxText _colors = null;
         [UI] private ComboBoxText _models = null;
+        [UI] private ComboBoxText _projections = null;
 
         private Matrix4x4 _worldMatrix;
         private Matrix4x4 _viewMatrix;
@@ -43,6 +44,22 @@ namespace lab2
 
         private readonly Cairo.Color BACKGROUND_COLOR = new Cairo.Color(1, 0.98, 0.94);
         private readonly Cairo.Color LINE_COLOR = new Cairo.Color(0, 0, 0);
+
+        private enum Projection
+        {
+            None,
+            Front,
+            Top,
+            Right,
+            Isometric,
+            Dimetric
+        }
+        private enum Model
+        {
+            Cube,
+            Octahedron,
+            Obj
+        }
         
         public MainWindow() : this(new Builder("MainWindow.glade"))
         {
@@ -55,8 +72,10 @@ namespace lab2
             _polygons = new List<Polygon>();
             
             _colors.Active = 1;
-            _models.Active = 1;
+            _models.Active = (int)Model.Octahedron;
+            _projections.Active = (int)Projection.None;
             CalculateWorldMatrix();
+            // InteractiveDebugging = true;
         }
 
         private MainWindow(Builder builder) : base(builder.GetRawOwnedObject("MainWindow"))
@@ -76,6 +95,19 @@ namespace lab2
                 // В методах Transform вектор - строка, поэтому сдвиг на 4 строке
                 _viewMatrix.M41 = args.Allocation.Width / 2f;
                 _viewMatrix.M42 = args.Allocation.Height / 2f;
+
+                float maxDistX = 0, maxDistY = 0;
+                foreach (var vertex in _vertices)
+                {
+                    maxDistX = Math.Max(maxDistX, Math.Abs(vertex.PointInWorld.X));
+                    maxDistY = Math.Max(maxDistY, Math.Abs(vertex.PointInWorld.Y));
+                }
+
+                var scale = Math.Min(args.Allocation.Width / maxDistX / 4, args.Allocation.Height / maxDistY / 4);
+                _xScale.Value *= scale;
+                _yScale.Value *= scale;
+                _zScale.Value *= scale;
+                CalculateWorldMatrix();
             };
             _canvas.ButtonPressEvent += (o, args) =>
             {
@@ -137,13 +169,17 @@ namespace lab2
             filter.Name = ".obj";
             filter.AddPattern("*.obj");
             _fileChooser.AddFilter(filter);
-
+            
+            _models.RemoveAll();
+            _models.Append(Model.Cube.ToString(), "Cube");
+            _models.Append(Model.Octahedron.ToString(), "Octahedron");
+            _models.Append(Model.Obj.ToString(), "Load .obj");
             _models.Changed += (o, args) =>
             {
                 if (_models.Active == -1)
                     return;
                 
-                if (_models.Active == 0)
+                if (_models.Active == (int)Model.Obj)
                 {
                     ResponseType response = (ResponseType) _fileChooser.Run();
                     if (response == ResponseType.Accept)
@@ -156,15 +192,24 @@ namespace lab2
                     _fileChooser.Hide();
                     _models.Active = -1;
                 }
-                else if (_models.ActiveText == "Cube")
+                else if (_models.Active == (int)Model.Cube)
                     PrimitiveForms.Cube(ref _vertices, ref _polygons);
-                else if (_models.ActiveText == "Octahedron")
+                else if (_models.Active == (int)Model.Octahedron)
                     PrimitiveForms.Octahedron(ref _vertices, ref _polygons);
             
                 _colors.Active = _colors.Active;
                 TransformToWorld();
                 _canvas.QueueDraw();
             };
+            
+            _projections.RemoveAll();
+            _projections.Append(Projection.None.ToString(), "None");
+            _projections.Append(Projection.Front.ToString(), "Front view");
+            _projections.Append(Projection.Top.ToString(), "Top view");
+            _projections.Append(Projection.Right.ToString(), "Right view");
+            _projections.Append(Projection.Isometric.ToString(), "Isometric");
+            _projections.Append(Projection.Dimetric.ToString(), "Dimetric");
+            _projections.Changed += (o, args) => { CalculateWorldMatrix(); };
             
             _xAngle.ValueChanged += (o, args) => { CalculateWorldMatrix(); };
             _yAngle.ValueChanged += (o, args) => { CalculateWorldMatrix(); };
@@ -179,15 +224,39 @@ namespace lab2
 
         private void CalculateWorldMatrix()
         {
-            _worldMatrix = Matrix4x4.CreateRotationX((float)(_xAngle.Value * Math.PI / 180)) *
-                           Matrix4x4.CreateRotationY((float)(_yAngle.Value * Math.PI / 180)) *
-                           Matrix4x4.CreateRotationZ((float)(_zAngle.Value * Math.PI / 180));
+            if (_projections.Active == (int)Projection.Isometric)
+            {
+                _worldMatrix = Matrix4x4.CreateRotationY((float) (45 * Math.PI / 180)) *
+                               Matrix4x4.CreateRotationX((float) (35 * Math.PI / 180));
+            }
+            else if (_projections.Active == (int)Projection.Dimetric)
+            {
+                _worldMatrix = Matrix4x4.CreateRotationY((float) (26 * Math.PI / 180)) *
+                               Matrix4x4.CreateRotationX((float) (30 * Math.PI / 180));
+            }
+            else
+            {
+                _worldMatrix = Matrix4x4.CreateRotationX((float)(_xAngle.Value * Math.PI / 180)) *
+                               Matrix4x4.CreateRotationY((float)(_yAngle.Value * Math.PI / 180)) *
+                               Matrix4x4.CreateRotationZ((float)(_zAngle.Value * Math.PI / 180));
+            }
+            
             
             _worldMatrix.M41 = (float)_xShift.Value;
             _worldMatrix.M42 = (float)_yShift.Value;
             _worldMatrix.M43 = (float)_zShift.Value;
             
             _worldMatrix *= Matrix4x4.CreateScale((float) _xScale.Value, (float) _yScale.Value, (float) _zScale.Value);
+
+            var projectionMatrix = Matrix4x4.Identity;
+            if (_projections.Active == (int)Projection.Front)
+                projectionMatrix.M33 = 0;
+            else if (_projections.Active == (int)Projection.Top)
+                projectionMatrix.M22 = 0;
+            else if (_projections.Active == (int)Projection.Right)
+                projectionMatrix.M11 = 0;
+
+            _worldMatrix = projectionMatrix * _worldMatrix;
             
             TransformToWorld();
             _canvas.QueueDraw();
@@ -246,7 +315,6 @@ namespace lab2
                 if (Vector4.Dot(polygon.NormalInWorld, viewDirection) < 0 && _hideInvisible.Active)
                     continue;
                 
-                cr.SetSourceColor(LINE_COLOR);
                 cr.MoveTo(TransformToView(polygon.Vertices[0].PointInWorld));
                 for (int i = 1; i < polygon.Vertices.Length; ++i)
                 {
@@ -272,12 +340,10 @@ namespace lab2
             if (_pointerButton == -1) return;
             
             // Left button - rotate
-            if (_pointerButton == 1)
+            if (_pointerButton == 1 && _projections.Active < (int)Projection.Isometric)
             {
-                _xAngle.Value = (_xAngle.Value + 360 + (args.Event.Y - _pointerPos.Y) / _canvas.Window.Height * 360) %
-                                360;
-                _yAngle.Value = (_yAngle.Value + 360 + (args.Event.X - _pointerPos.X) / _canvas.Window.Width * 360) %
-                                360;
+                _xAngle.Value = (_xAngle.Value + 360 + (args.Event.Y - _pointerPos.Y) / _canvas.Window.Height * 360) % 360;
+                _yAngle.Value = (_yAngle.Value + 360 + (args.Event.X - _pointerPos.X) / _canvas.Window.Width * 360) % 360;
             }
             // Right button - translate
             else if (_pointerButton == 3)
