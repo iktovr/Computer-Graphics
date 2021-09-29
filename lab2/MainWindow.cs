@@ -197,7 +197,10 @@ namespace lab2
                 else if (_models.Active == (int)Model.Octahedron)
                     PrimitiveForms.Octahedron(ref _vertices, ref _polygons);
             
-                _colors.Active = _colors.Active;
+                if (_colors.Active == 1)
+                    SetStandardColor();
+                else if (_colors.Active == 2)
+                    SetRandomColors();
                 TransformToWorld();
                 _canvas.QueueDraw();
             };
@@ -288,7 +291,12 @@ namespace lab2
 
         private void SetRandomColors()
         {
-            
+            Random gen = new((int) DateTime.Now.Ticks & 0x0000FFFF);
+            foreach (var polygon in _polygons)
+            {
+                HSV.ToRgb(gen.NextDouble(), 1, 1, out var r, out var g, out var b);
+                polygon.Color = new Vector3((float)r, (float)g, (float)b);
+            }
         }
 
         private void SetStandardColor()

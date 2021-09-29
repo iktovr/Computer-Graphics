@@ -31,7 +31,7 @@ namespace Primitives
         public Vector4 NormalInWorld;
         public Vector3 Color;
 
-        public static Vector3 StandardColor = new Vector3(0.117f, 0.565f, 1);
+        public static readonly Vector3 StandardColor = new Vector3(0.117f, 0.565f, 1);
 
         public Polygon(Vertex a, Vertex b, Vertex c, Vector3 color)
         {
@@ -126,12 +126,12 @@ namespace Primitives
             };
             polygons = new List<Polygon>
             {
-                new Polygon(vertices[0], vertices[1], vertices[2], vertices[3], new Vector3(1, 1, 1)),
-                new Polygon(vertices[7], vertices[6], vertices[5], vertices[4], new Vector3(1, 1, 0)),
-                new Polygon(vertices[1], vertices[0], vertices[4], vertices[5], new Vector3(1, 0.63f, 0)),
-                new Polygon(vertices[2], vertices[1], vertices[5], vertices[6], new Vector3(0, 0, 1)),
-                new Polygon(vertices[3], vertices[2], vertices[6], vertices[7], new Vector3(1, 0, 0)),
-                new Polygon(vertices[0], vertices[3], vertices[7], vertices[4], new Vector3(0, 1, 0)),
+                new Polygon(vertices[0], vertices[1], vertices[2], vertices[3]),
+                new Polygon(vertices[7], vertices[6], vertices[5], vertices[4]),
+                new Polygon(vertices[1], vertices[0], vertices[4], vertices[5]),
+                new Polygon(vertices[2], vertices[1], vertices[5], vertices[6]),
+                new Polygon(vertices[3], vertices[2], vertices[6], vertices[7]),
+                new Polygon(vertices[0], vertices[3], vertices[7], vertices[4]),
             };
         }
         
