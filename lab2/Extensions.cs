@@ -13,6 +13,11 @@ namespace Extensions
         public static void LineTo(this Context context, Vector2 point)
         {
             context.LineTo(point.X, point.Y);
+        }  
+        
+        public static void RelLineTo(this Context context, Vector2 point)
+        {
+            context.RelLineTo(point.X, point.Y);
         }
         
         public static void Line(this Context context, Vector2 point1, Vector2 point2)

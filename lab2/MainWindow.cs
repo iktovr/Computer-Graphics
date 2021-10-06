@@ -28,6 +28,7 @@ namespace lab2
         [UI] private CheckButton _zBuffer = null;
         [UI] private CheckButton _wireframe = null;
         [UI] private CheckButton _hideInvisible = null;
+        [UI] private CheckButton _showNormals = null;
         [UI] private ComboBoxText _colors = null;
         [UI] private ComboBoxText _models = null;
         [UI] private ComboBoxText _projections = null;
@@ -44,6 +45,7 @@ namespace lab2
 
         private readonly Cairo.Color BACKGROUND_COLOR = new Cairo.Color(1, 0.98, 0.94);
         private readonly Cairo.Color LINE_COLOR = new Cairo.Color(0, 0, 0);
+        private readonly Cairo.Color NORMAL_COLOR = new Cairo.Color(0, 1, 0);
 
         private enum Projection
         {
@@ -75,7 +77,6 @@ namespace lab2
             _models.Active = (int)Model.Octahedron;
             _projections.Active = (int)Projection.None;
             CalculateWorldMatrix();
-            // InteractiveDebugging = true;
         }
 
         private MainWindow(Builder builder) : base(builder.GetRawOwnedObject("MainWindow"))
@@ -92,10 +93,6 @@ namespace lab2
             _canvas.Drawn += CanvasDrawnHandler;
             _canvas.SizeAllocated += (o, args) =>
             {
-                // В методах Transform вектор - строка, поэтому сдвиг на 4 строке
-                _viewMatrix.M41 = args.Allocation.Width / 2f;
-                _viewMatrix.M42 = args.Allocation.Height / 2f;
-
                 float maxDistX = 0, maxDistY = 0;
                 foreach (var vertex in _vertices)
                 {
@@ -104,10 +101,14 @@ namespace lab2
                 }
 
                 var scale = Math.Min(args.Allocation.Width / maxDistX / 4, args.Allocation.Height / maxDistY / 4);
-                _xScale.Value *= scale;
-                _yScale.Value *= scale;
-                _zScale.Value *= scale;
-                CalculateWorldMatrix();
+                _viewMatrix = Matrix4x4.Identity;
+                _viewMatrix.M22 *= -1;
+                _viewMatrix *= scale;
+
+                // В методах Transform вектор - строка, поэтому сдвиг на 4 строке
+                _viewMatrix.M41 = args.Allocation.Width / 2f;
+                _viewMatrix.M42 = args.Allocation.Height / 2f;
+                _canvas.QueueDraw();
             };
             _canvas.ButtonPressEvent += (o, args) =>
             {
@@ -135,12 +136,14 @@ namespace lab2
                     _yScale.Value += _yScale.StepIncrement;
                     _zScale.Value += _zScale.StepIncrement;
                 }
+                CalculateWorldMatrix();
                 _canvas.QueueDraw();
             };
 
             _zBuffer.Toggled += (o, args) => { TransformToWorld(); _canvas.QueueDraw(); };
             _wireframe.Toggled += (o, args) => { _canvas.QueueDraw(); };
             _hideInvisible.Toggled += (o, args) => { _canvas.QueueDraw(); };
+            _showNormals.Toggled += (o, args) => { _canvas.QueueDraw(); };
 
             _colors.Changed += (o, args) =>
             {
@@ -218,38 +221,37 @@ namespace lab2
             _yAngle.ValueChanged += (o, args) => { CalculateWorldMatrix(); };
             _zAngle.ValueChanged += (o, args) => { CalculateWorldMatrix(); };            
             _xScale.ValueChanged += (o, args) => { CalculateWorldMatrix(); };
-            _xScale.ValueChanged += (o, args) => { CalculateWorldMatrix(); };
-            _xScale.ValueChanged += (o, args) => { CalculateWorldMatrix(); };            
+            _yScale.ValueChanged += (o, args) => { CalculateWorldMatrix(); };
+            _zScale.ValueChanged += (o, args) => { CalculateWorldMatrix(); };            
             _xShift.ValueChanged += (o, args) => { CalculateWorldMatrix(); };
-            _xShift.ValueChanged += (o, args) => { CalculateWorldMatrix(); };
-            _xShift.ValueChanged += (o, args) => { CalculateWorldMatrix(); };
+            _yShift.ValueChanged += (o, args) => { CalculateWorldMatrix(); };
+            _zShift.ValueChanged += (o, args) => { CalculateWorldMatrix(); };
+
+            CreateMatrixView();
         }
 
         private void CalculateWorldMatrix()
         {
+            Matrix4x4 rotation;
             if (_projections.Active == (int)Projection.Isometric)
             {
-                _worldMatrix = Matrix4x4.CreateRotationY((float) (45 * Math.PI / 180)) *
-                               Matrix4x4.CreateRotationX((float) (35 * Math.PI / 180));
+                rotation = Matrix4x4.CreateRotationY((float) (45 * Math.PI / 180)) *
+                           Matrix4x4.CreateRotationX((float) (35 * Math.PI / 180));
             }
             else if (_projections.Active == (int)Projection.Dimetric)
             {
-                _worldMatrix = Matrix4x4.CreateRotationY((float) (26 * Math.PI / 180)) *
-                               Matrix4x4.CreateRotationX((float) (30 * Math.PI / 180));
+                rotation = Matrix4x4.CreateRotationY((float) (26 * Math.PI / 180)) *
+                           Matrix4x4.CreateRotationX((float) (30 * Math.PI / 180));
             }
             else
             {
-                _worldMatrix = Matrix4x4.CreateRotationX((float)(_xAngle.Value * Math.PI / 180)) *
-                               Matrix4x4.CreateRotationY((float)(_yAngle.Value * Math.PI / 180)) *
-                               Matrix4x4.CreateRotationZ((float)(_zAngle.Value * Math.PI / 180));
+                rotation = Matrix4x4.CreateRotationX((float)(_xAngle.Value * Math.PI / 180)) *
+                           Matrix4x4.CreateRotationY((float)(_yAngle.Value * Math.PI / 180)) *
+                           Matrix4x4.CreateRotationZ((float)(_zAngle.Value * Math.PI / 180));
             }
-            
-            
-            _worldMatrix.M41 = (float)_xShift.Value;
-            _worldMatrix.M42 = (float)_yShift.Value;
-            _worldMatrix.M43 = (float)_zShift.Value;
-            
-            _worldMatrix *= Matrix4x4.CreateScale((float) _xScale.Value, (float) _yScale.Value, (float) _zScale.Value);
+
+            var translation = Matrix4x4.CreateTranslation((float) _xShift.Value, (float) _yShift.Value, (float) _zShift.Value);
+            var scale = Matrix4x4.CreateScale((float) _xScale.Value, (float) _yScale.Value, (float) _zScale.Value);
 
             var projectionMatrix = Matrix4x4.Identity;
             if (_projections.Active == (int)Projection.Front)
@@ -259,10 +261,26 @@ namespace lab2
             else if (_projections.Active == (int)Projection.Right)
                 projectionMatrix.M11 = 0;
 
-            _worldMatrix = projectionMatrix * _worldMatrix;
+            _worldMatrix = projectionMatrix * scale * rotation * translation;
             
+            UpdateMatrixView();
             TransformToWorld();
             _canvas.QueueDraw();
+        }
+
+        private static Matrix4x4 TransposeInvert(Matrix4x4 m)
+        {
+            return new Matrix4x4(
+                m.M33 * m.M22 - m.M23 * m.M32, 
+                m.M23 * m.M31 - m.M21 * m.M33, 
+                m.M21 * m.M32 - m.M31 * m.M22, 0,
+                m.M13 * m.M32 - m.M33 * m.M12,
+                m.M33 * m.M11 - m.M13 * m.M31,
+                m.M31 * m.M12 - m.M11 * m.M32, 0,
+                m.M23 * m.M12 - m.M13 * m.M22,
+                m.M21 * m.M13 - m.M23 * m.M11,
+                m.M11 * m.M22 - m.M21 * m.M12, 0,
+                0,   0,   0,   0);
         }
 
         private void TransformToWorld()
@@ -272,8 +290,7 @@ namespace lab2
                 vertex.PointInWorld = Vector4.Transform(vertex.Point, _worldMatrix);
             }
 
-            Matrix4x4.Invert(_worldMatrix, out var normalMatrix);
-            normalMatrix = Matrix4x4.Transpose(normalMatrix);
+            var normalMatrix = TransposeInvert(_worldMatrix);
             foreach (var polygon in _polygons)
             {
                 polygon.NormalInWorld = Vector4.Transform(polygon.Normal, normalMatrix);
@@ -306,7 +323,10 @@ namespace lab2
                 polygon.Color = Polygon.StandardColor;
             }
         }
-
+            
+        private readonly Vector4 _viewDirection = new Vector4(0, 0, 1, 0);
+        private const int NormalLength = 20;
+        
         private void CanvasDrawnHandler(object o, DrawnArgs args)
         {
             var cr = args.Cr;
@@ -317,10 +337,9 @@ namespace lab2
             cr.Paint();
             
             cr.SetSourceColor(LINE_COLOR);
-            var viewDirection = new Vector4(0, 0, 1, 0);
             foreach (var polygon in _polygons)
             {
-                if (Vector4.Dot(polygon.NormalInWorld, viewDirection) < 0 && _hideInvisible.Active)
+                if (Vector4.Dot(polygon.NormalInWorld, _viewDirection) < 0 && _hideInvisible.Active)
                     continue;
                 
                 cr.MoveTo(TransformToView(polygon.Vertices[0].PointInWorld));
@@ -340,8 +359,42 @@ namespace lab2
                     cr.Stroke();
                 else
                     cr.NewPath();
+
+                if (_showNormals.Active)
+                {
+                    cr.Save();
+                    cr.SetSourceColor(NORMAL_COLOR);
+                    Vector4 center = Vector4.Zero;
+                    foreach (var vertex in polygon.Vertices)
+                    {
+                        center += vertex.PointInWorld;
+                    }
+
+                    center /= polygon.Vertices.Length;
+                    var start = TransformToView(center);
+                    var end = TransformToView(center + polygon.NormalInWorld);
+                    cr.MoveTo(start);
+                    var viewNormal = start - end;
+                    if (viewNormal.Length() > NormalLength)
+                    {
+                        viewNormal = Vector2.Normalize(viewNormal) * NormalLength;
+                    }
+                    cr.RelLineTo(viewNormal);
+                    cr.Stroke();
+                    cr.Restore();
+                }
             }
         }
+
+        // private static void MatrixToAngles(Matrix4x4 matrix, out double x, out double y, out double z)
+        // {
+        //     x = Math.Atan2(matrix.M21, matrix.M11) / Math.PI * 180;
+        //     y = Math.Atan2(-matrix.M31, Math.Sqrt(1 - matrix.M31 * matrix.M31)) / Math.PI * 180;
+        //     z = Math.Atan2(matrix.M32, matrix.M33) / Math.PI * 180;
+        //     // x = Math.Atan2(-matrix.M23, matrix.M33) / Math.PI * 180;
+        //     // y = Math.Atan2(matrix.M13, Math.Sqrt(1 - matrix.M13 * matrix.M13)) / Math.PI * 180;
+        //     // z = Math.Atan2(-matrix.M12, matrix.M11) / Math.PI * 180;
+        // }
 
         private void CanvasMotionNotifyHandler(object o, MotionNotifyEventArgs args)
         {
@@ -350,19 +403,68 @@ namespace lab2
             // Left button - rotate
             if (_pointerButton == 1 && _projections.Active < (int)Projection.Isometric)
             {
-                _xAngle.Value = (_xAngle.Value + 360 + (args.Event.Y - _pointerPos.Y) / _canvas.Window.Height * 360) % 360;
-                _yAngle.Value = (_yAngle.Value + 360 + (args.Event.X - _pointerPos.X) / _canvas.Window.Width * 360) % 360;
+                _xAngle.Value = (_xAngle.Value + 360 - (args.Event.Y - _pointerPos.Y) / _canvas.Window.Height * 360) % 360;
+                _yAngle.Value = (_yAngle.Value + 360 - (args.Event.X - _pointerPos.X) / _canvas.Window.Width * 360) % 360;
+                
+                // var currentRotation = Matrix4x4.CreateRotationX((float)(_xAngle.Value * Math.PI / 180)) * 
+                //                       Matrix4x4.CreateRotationY((float)(_yAngle.Value * Math.PI / 180)) * 
+                //                       Matrix4x4.CreateRotationZ((float)(_zAngle.Value * Math.PI / 180));
+                //
+                // Vector3 axis = new((float) (args.Event.X - _pointerPos.X), (float) (args.Event.Y - _pointerPos.Y), 0);
+                // float angle = (float)(axis.Length() / 180 * Math.PI);
+                // axis = Vector3.Normalize(new Vector3(-axis.Y, -axis.X, 0));
+                // var rotation = Matrix4x4.CreateFromAxisAngle(axis, angle);
+                // currentRotation *= rotation;
+                // MatrixToAngles(currentRotation, out var x, out var y, out var z);
+                // _xAngle.Value = x;
+                // _yAngle.Value = y;
+                // _zAngle.Value = z;
+                // CalculateWorldMatrix();
             }
             // Right button - translate
             else if (_pointerButton == 3)
             {
-                _xShift.Value += (args.Event.X - _pointerPos.X) / _xScale.Value;
-                _yShift.Value -= (args.Event.Y - _pointerPos.Y) / _yScale.Value;
+                _xShift.Value += (args.Event.X - _pointerPos.X) / _viewMatrix.M11;
+                _yShift.Value -= (args.Event.Y - _pointerPos.Y) / _viewMatrix.M11;
             }
 
             _pointerPos.X = (float)args.Event.X;
             _pointerPos.Y = (float)args.Event.Y;
             _canvas.QueueDraw();
+        }
+
+        [UI] private Adjustment _M11; [UI] private Adjustment _M12; [UI] private Adjustment _M13; [UI] private Adjustment _M14;
+        [UI] private Adjustment _M21; [UI] private Adjustment _M22; [UI] private Adjustment _M23; [UI] private Adjustment _M24;
+        [UI] private Adjustment _M31; [UI] private Adjustment _M32; [UI] private Adjustment _M33; [UI] private Adjustment _M34;
+        [UI] private Adjustment _M41; [UI] private Adjustment _M42; [UI] private Adjustment _M43; [UI] private Adjustment _M44;
+        
+        private void CreateMatrixView()
+        {
+            _M11.ValueChanged += (o, args) => {_worldMatrix.M11 = (float)_M11.Value; TransformToWorld(); _canvas.QueueDraw();}; 
+            _M12.ValueChanged += (o, args) => {_worldMatrix.M12 = (float)_M12.Value; TransformToWorld(); _canvas.QueueDraw();}; 
+            _M13.ValueChanged += (o, args) => {_worldMatrix.M13 = (float)_M13.Value; TransformToWorld(); _canvas.QueueDraw();}; 
+            _M14.ValueChanged += (o, args) => {_worldMatrix.M14 = (float)_M14.Value; TransformToWorld(); _canvas.QueueDraw();};
+            _M21.ValueChanged += (o, args) => {_worldMatrix.M21 = (float)_M21.Value; TransformToWorld(); _canvas.QueueDraw();}; 
+            _M22.ValueChanged += (o, args) => {_worldMatrix.M22 = (float)_M22.Value; TransformToWorld(); _canvas.QueueDraw();}; 
+            _M23.ValueChanged += (o, args) => {_worldMatrix.M23 = (float)_M23.Value; TransformToWorld(); _canvas.QueueDraw();}; 
+            _M24.ValueChanged += (o, args) => {_worldMatrix.M24 = (float)_M24.Value; TransformToWorld(); _canvas.QueueDraw();};
+            _M31.ValueChanged += (o, args) => {_worldMatrix.M31 = (float)_M31.Value; TransformToWorld(); _canvas.QueueDraw();}; 
+            _M32.ValueChanged += (o, args) => {_worldMatrix.M32 = (float)_M32.Value; TransformToWorld(); _canvas.QueueDraw();}; 
+            _M33.ValueChanged += (o, args) => {_worldMatrix.M33 = (float)_M33.Value; TransformToWorld(); _canvas.QueueDraw();}; 
+            _M34.ValueChanged += (o, args) => {_worldMatrix.M34 = (float)_M34.Value; TransformToWorld(); _canvas.QueueDraw();};
+            _M41.ValueChanged += (o, args) => {_worldMatrix.M41 = (float)_M41.Value; TransformToWorld(); _canvas.QueueDraw();}; 
+            _M42.ValueChanged += (o, args) => {_worldMatrix.M42 = (float)_M42.Value; TransformToWorld(); _canvas.QueueDraw();}; 
+            _M43.ValueChanged += (o, args) => {_worldMatrix.M43 = (float)_M43.Value; TransformToWorld(); _canvas.QueueDraw();}; 
+            _M44.ValueChanged += (o, args) => {_worldMatrix.M44 = (float)_M44.Value; TransformToWorld(); _canvas.QueueDraw();};
+        }
+
+        private void UpdateMatrixView()
+        {
+            _M11.Value = _worldMatrix.M11; _M12.Value = _worldMatrix.M12; _M13.Value = _worldMatrix.M13; _M14.Value = _worldMatrix.M14;
+            _M21.Value = _worldMatrix.M21; _M22.Value = _worldMatrix.M22; _M23.Value = _worldMatrix.M23; _M24.Value = _worldMatrix.M24;
+            _M31.Value = _worldMatrix.M31; _M32.Value = _worldMatrix.M32; _M33.Value = _worldMatrix.M33; _M34.Value = _worldMatrix.M34;
+            _M41.Value = _worldMatrix.M41; _M42.Value = _worldMatrix.M42; _M43.Value = _worldMatrix.M43; _M44.Value = _worldMatrix.M44;
+            
         }
     }
 }
