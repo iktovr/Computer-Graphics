@@ -172,6 +172,7 @@ namespace lab2
             filter.Name = ".obj";
             filter.AddPattern("*.obj");
             _fileChooser.AddFilter(filter);
+            _fileChooser.SetCurrentFolder(".");
             
             _models.RemoveAll();
             _models.Append(Model.Cube.ToString(), "Cube");
