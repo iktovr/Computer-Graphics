@@ -324,7 +324,7 @@ namespace lab2
             }
         }
             
-        private readonly Vector4 _viewDirection = new Vector4(0, 0, 1, 0);
+        private readonly Vector4 _viewDirection = new Vector4(0, 0, -1, 0);
         private const int NormalLength = 20;
         
         private void CanvasDrawnHandler(object o, DrawnArgs args)
@@ -339,7 +339,7 @@ namespace lab2
             cr.SetSourceColor(LINE_COLOR);
             foreach (var polygon in _polygons)
             {
-                if (Vector4.Dot(polygon.NormalInWorld, _viewDirection) < 0 && _hideInvisible.Active)
+                if (Vector4.Dot(polygon.NormalInWorld, _viewDirection) > 0 && _hideInvisible.Active)
                     continue;
                 
                 cr.MoveTo(TransformToView(polygon.Vertices[0].PointInWorld));
@@ -371,10 +371,8 @@ namespace lab2
                     }
 
                     center /= polygon.Vertices.Length;
-                    var start = TransformToView(center);
-                    var end = TransformToView(center + polygon.NormalInWorld);
-                    cr.MoveTo(start);
-                    var viewNormal = start - end;
+                    cr.MoveTo(TransformToView(center));
+                    var viewNormal = TransformToView(polygon.NormalInWorld);
                     if (viewNormal.Length() > NormalLength)
                     {
                         viewNormal = Vector2.Normalize(viewNormal) * NormalLength;
@@ -404,7 +402,7 @@ namespace lab2
             if (_pointerButton == 1 && _projections.Active < (int)Projection.Isometric)
             {
                 _xAngle.Value = (_xAngle.Value + 360 - (args.Event.Y - _pointerPos.Y) / _canvas.Window.Height * 360) % 360;
-                _yAngle.Value = (_yAngle.Value + 360 - (args.Event.X - _pointerPos.X) / _canvas.Window.Width * 360) % 360;
+                _yAngle.Value = (_yAngle.Value + 360 + (args.Event.X - _pointerPos.X) / _canvas.Window.Width * 360) % 360;
                 
                 // var currentRotation = Matrix4x4.CreateRotationX((float)(_xAngle.Value * Math.PI / 180)) * 
                 //                       Matrix4x4.CreateRotationY((float)(_yAngle.Value * Math.PI / 180)) * 
@@ -464,7 +462,6 @@ namespace lab2
             _M21.Value = _worldMatrix.M21; _M22.Value = _worldMatrix.M22; _M23.Value = _worldMatrix.M23; _M24.Value = _worldMatrix.M24;
             _M31.Value = _worldMatrix.M31; _M32.Value = _worldMatrix.M32; _M33.Value = _worldMatrix.M33; _M34.Value = _worldMatrix.M34;
             _M41.Value = _worldMatrix.M41; _M42.Value = _worldMatrix.M42; _M43.Value = _worldMatrix.M43; _M44.Value = _worldMatrix.M44;
-            
         }
     }
 }

@@ -61,7 +61,7 @@ namespace Primitives
         private void CalculateNormal()
         {
             Vertex a = Vertices[0], b = Vertices[1], c = Vertices[2];
-            Vector3 vec1 = new Vector3(a.Point.X - b.Point.X, a.Point.Y - b.Point.Y, a.Point.Z - b.Point.Z);
+            Vector3 vec1 = new Vector3(b.Point.X - a.Point.X, b.Point.Y - a.Point.Y, b.Point.Z - a.Point.Z);
             Vector3 vec2 = new Vector3(c.Point.X - a.Point.X, c.Point.Y - a.Point.Y, c.Point.Z - a.Point.Z);
             Normal = new Vector4(Vector3.Normalize(Vector3.Cross(vec1, vec2)), 0);
         }
@@ -126,12 +126,12 @@ namespace Primitives
             };
             polygons = new List<Polygon>
             {
-                new Polygon(vertices[0], vertices[1], vertices[2], vertices[3]),
-                new Polygon(vertices[7], vertices[6], vertices[5], vertices[4]),
-                new Polygon(vertices[1], vertices[0], vertices[4], vertices[5]),
-                new Polygon(vertices[2], vertices[1], vertices[5], vertices[6]),
-                new Polygon(vertices[3], vertices[2], vertices[6], vertices[7]),
-                new Polygon(vertices[0], vertices[3], vertices[7], vertices[4]),
+                new Polygon(vertices[3], vertices[2], vertices[1], vertices[0]),
+                new Polygon(vertices[4], vertices[5], vertices[6], vertices[7]),
+                new Polygon(vertices[5], vertices[4], vertices[0], vertices[1]),
+                new Polygon(vertices[6], vertices[5], vertices[1], vertices[2]),
+                new Polygon(vertices[7], vertices[6], vertices[2], vertices[3]),
+                new Polygon(vertices[4], vertices[7], vertices[3], vertices[0]),
             };
         }
         
@@ -146,14 +146,14 @@ namespace Primitives
             };
             polygons = new List<Polygon>
             {
-                new Polygon(vertices[1], vertices[2], vertices[5]),
-                new Polygon(vertices[2], vertices[3], vertices[5]),
-                new Polygon(vertices[3], vertices[4], vertices[5]),
-                new Polygon(vertices[4], vertices[1], vertices[5]),
-                new Polygon(vertices[1], vertices[0], vertices[2]),
-                new Polygon(vertices[2], vertices[0], vertices[3]),
-                new Polygon(vertices[3], vertices[0], vertices[4]),
-                new Polygon(vertices[4], vertices[0], vertices[1])
+                new Polygon(vertices[0], vertices[2], vertices[1]),
+                new Polygon(vertices[0], vertices[3], vertices[2]),
+                new Polygon(vertices[0], vertices[4], vertices[3]),
+                new Polygon(vertices[0], vertices[1], vertices[4]),
+                new Polygon(vertices[2], vertices[5], vertices[1]),
+                new Polygon(vertices[1], vertices[5], vertices[4]),
+                new Polygon(vertices[4], vertices[5], vertices[3]),
+                new Polygon(vertices[3], vertices[5], vertices[2])
             };
         }
     }
