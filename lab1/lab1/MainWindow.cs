@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Threading;
 using Cairo;
 using Gdk;
 using Gtk;
@@ -20,16 +21,49 @@ namespace lab1
         [UI] private Adjustment _scale = null;
         [UI] private Adjustment _rCenterX = null;
         [UI] private Adjustment _rCenterY = null;
+        [UI] private CheckButton _animateButton = null;
         
         private List<Vector2> _dots;
         private Vector2 _pointerPos;
         private int _pointerButton = -1;
         private Vector2 _canvasSize;
+        private int _maxSteps = 1;
+        private Thread _animationThread;
+        private bool _quit = false;
+        
+        private void timer_callback(int delta)
+        {
+            if (!_animateButton.Active)
+                return;
+            _maxSteps += 1;
+            if (_maxSteps >= _dots.Count)
+                _maxSteps = 2;
+            _canvas.QueueDraw();
+        }
+
+        private void TheadLoop(object uisync)
+        {
+            const int _TIME_DELAY_IN_MS = 50;
+            var prevTicks = Environment.TickCount;
+            while (!_quit)
+            {
+                var deltaTicks = Environment.TickCount - prevTicks;
+                if (deltaTicks < _TIME_DELAY_IN_MS) {
+                    Thread.Sleep((3 * (_TIME_DELAY_IN_MS - deltaTicks)) >> 2);
+                    continue;
+                }
+                prevTicks += deltaTicks;
+
+                (uisync as SynchronizationContext).Post(d => timer_callback(deltaTicks), null);
+            }
+        }
 
         public MainWindow() : this(new Builder("MainWindow.glade"))
         {
             _dots = new List<Vector2>();
             CalculateDots();
+            _animationThread = new Thread(TheadLoop);
+            _animationThread.Start(SynchronizationContext.Current);
         }
 
         private MainWindow(Builder builder) : base(builder.GetRawOwnedObject("MainWindow"))
@@ -99,6 +133,13 @@ namespace lab1
                 _pointerPos.Y = (float)args.Event.Y;
             };
             
+            _animateButton.Toggled += (sender, args) =>
+            {
+                if (_animateButton.Active)
+                    _maxSteps = 2;
+                _canvas.QueueDraw();
+            };
+
             _canvas.ButtonReleaseEvent += (o, args) =>
             {
                 _pointerButton = -1;
@@ -169,9 +210,11 @@ namespace lab1
             
             cr.SetSourceRGB(0, 0, 0);
             cr.MoveTo(TransformDot(_dots[0]));
-            foreach (var dot in _dots)
+            // foreach (var dot in _dots)
+            int max = _animateButton.Active ? _maxSteps : _dots.Count;
+            for (int i = 0; i < Math.Min(max, _dots.Count); ++i)
             {
-                cr.LineTo(TransformDot(dot));
+                cr.LineTo(TransformDot(_dots[i]));
             }
             cr.Stroke();
         }
@@ -221,6 +264,7 @@ namespace lab1
 
         private void Window_DeleteEvent(object sender, DeleteEventArgs a)
         {
+            _quit = true;
             Application.Quit();
         }
     }
