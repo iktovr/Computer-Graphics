@@ -385,15 +385,12 @@ namespace lab2
             }
         }
 
-        // private static void MatrixToAngles(Matrix4x4 matrix, out double x, out double y, out double z)
-        // {
-        //     x = Math.Atan2(matrix.M21, matrix.M11) / Math.PI * 180;
-        //     y = Math.Atan2(-matrix.M31, Math.Sqrt(1 - matrix.M31 * matrix.M31)) / Math.PI * 180;
-        //     z = Math.Atan2(matrix.M32, matrix.M33) / Math.PI * 180;
-        //     // x = Math.Atan2(-matrix.M23, matrix.M33) / Math.PI * 180;
-        //     // y = Math.Atan2(matrix.M13, Math.Sqrt(1 - matrix.M13 * matrix.M13)) / Math.PI * 180;
-        //     // z = Math.Atan2(-matrix.M12, matrix.M11) / Math.PI * 180;
-        // }
+        private static void MatrixToAngles(Matrix4x4 matrix, out double x, out double y, out double z)
+        {
+            x = Math.Atan2(matrix.M23, matrix.M33) / Math.PI * 180;
+            y = Math.Atan2(-matrix.M13, Math.Sqrt(1 - matrix.M13 * matrix.M13)) / Math.PI * 180;
+            z = Math.Atan2(matrix.M12, matrix.M11) / Math.PI * 180;
+        }
 
         private void CanvasMotionNotifyHandler(object o, MotionNotifyEventArgs args)
         {
@@ -402,23 +399,23 @@ namespace lab2
             // Left button - rotate
             if (_pointerButton == 1 && _projections.Active < (int)Projection.Isometric)
             {
-                _xAngle.Value = (_xAngle.Value + 360 - (args.Event.Y - _pointerPos.Y) / _canvas.Window.Height * 360) % 360;
-                _yAngle.Value = (_yAngle.Value + 360 + (args.Event.X - _pointerPos.X) / _canvas.Window.Width * 360) % 360;
+                // _xAngle.Value = (_xAngle.Value + 360 - (args.Event.Y - _pointerPos.Y) / _canvas.Window.Height * 360) % 360;
+                // _yAngle.Value = (_yAngle.Value + 360 + (args.Event.X - _pointerPos.X) / _canvas.Window.Width * 360) % 360;
                 
-                // var currentRotation = Matrix4x4.CreateRotationX((float)(_xAngle.Value * Math.PI / 180)) * 
-                //                       Matrix4x4.CreateRotationY((float)(_yAngle.Value * Math.PI / 180)) * 
-                //                       Matrix4x4.CreateRotationZ((float)(_zAngle.Value * Math.PI / 180));
-                //
-                // Vector3 axis = new((float) (args.Event.X - _pointerPos.X), (float) (args.Event.Y - _pointerPos.Y), 0);
-                // float angle = (float)(axis.Length() / 180 * Math.PI);
-                // axis = Vector3.Normalize(new Vector3(-axis.Y, -axis.X, 0));
-                // var rotation = Matrix4x4.CreateFromAxisAngle(axis, angle);
-                // currentRotation *= rotation;
-                // MatrixToAngles(currentRotation, out var x, out var y, out var z);
-                // _xAngle.Value = x;
-                // _yAngle.Value = y;
-                // _zAngle.Value = z;
-                // CalculateWorldMatrix();
+                var currentRotation = Matrix4x4.CreateRotationX((float)(_xAngle.Value * Math.PI / 180)) * 
+                                      Matrix4x4.CreateRotationY((float)(_yAngle.Value * Math.PI / 180)) * 
+                                      Matrix4x4.CreateRotationZ((float)(_zAngle.Value * Math.PI / 180));
+                
+                Vector3 axis = new((float) (args.Event.X - _pointerPos.X), (float) (args.Event.Y - _pointerPos.Y), 0);
+                float angle = (float)(axis.Length() / 180 * Math.PI);
+                axis = Vector3.Normalize(new Vector3(axis.Y, axis.X, 0));
+                var rotation = Matrix4x4.CreateFromAxisAngle(axis, angle);
+                currentRotation *= rotation;
+                MatrixToAngles(currentRotation, out var x, out var y, out var z);
+                _xAngle.Value = x;
+                _yAngle.Value = y;
+                _zAngle.Value = z;
+                CalculateWorldMatrix();
             }
             // Right button - translate
             else if (_pointerButton == 3)
