@@ -331,7 +331,7 @@ namespace lab2
         private void CanvasDrawnHandler(object o, DrawnArgs args)
         {
             var cr = args.Cr;
-            cr.Antialias = Antialias.Subpixel;
+            cr.Antialias = Antialias.None;
             cr.LineJoin = LineJoin.Bevel; // чинит острые концы у линий при маленьком увеличении
             
             cr.SetSourceColor(BACKGROUND_COLOR);
