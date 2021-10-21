@@ -48,6 +48,9 @@ namespace Primitives
             Vertices = new Vertex[] {a, b, c};
             CalculateNormal();
             Material = material;
+            a.Polygons.Add(this);
+            b.Polygons.Add(this);
+            c.Polygons.Add(this);
         }
 
         public Polygon(Vertex a, Vertex b, Vertex c, Vertex d, Material material)
@@ -55,6 +58,10 @@ namespace Primitives
             Vertices = new Vertex[] {a, b, c, d};
             CalculateNormal();
             Material = material;
+            a.Polygons.Add(this);
+            b.Polygons.Add(this);
+            c.Polygons.Add(this);
+            d.Polygons.Add(this);
         }
 
         public Polygon(Vertex[] vertices, Material material)
@@ -62,6 +69,10 @@ namespace Primitives
             Vertices = vertices;
             CalculateNormal();
             Material = material;
+            foreach (Vertex vertex in Vertices)
+            {
+                vertex.Polygons.Add(this);
+            }
         }
         
         private void CalculateNormal()
@@ -195,7 +206,7 @@ namespace Primitives
                     mesh.Polygons.Add(polygon);
                 }
             }
-
+            mesh.CalculateVerticesNormals();
             file.Close();
         }
 
@@ -211,31 +222,18 @@ namespace Primitives
             for (int i = 0; i < sides; ++i)
             {
                 mesh.Vertices.Add(new Vertex(Vector4.Transform(mesh.Vertices.Last().Point, rotation)));
-                var polygon = new Polygon(mesh.Vertices[i+1], mesh.Vertices[i+2], mesh.Vertices[0], material);
-                mesh.Vertices[i+1].Polygons.Add(polygon);
-                mesh.Vertices[i+2].Polygons.Add(polygon);
-                mesh.Vertices[0].Polygons.Add(polygon);
-                mesh.Polygons.Add(polygon);
+                mesh.Polygons.Add(new Polygon(mesh.Vertices[i+1], mesh.Vertices[i+2], mesh.Vertices[0], material));
             }
             mesh.Vertices.Add(new Vertex(0, -height, 0));
             mesh.Vertices.Add(new Vertex(radius, -height, 0));
             for (int i = 0; i < sides; ++i)
             {
                 mesh.Vertices.Add(new Vertex(Vector4.Transform(mesh.Vertices.Last().Point, rotation)));
-                var polygon = new Polygon(mesh.Vertices[i+sides+4], mesh.Vertices[i+sides+3], mesh.Vertices[sides+2], material);
-                mesh.Vertices[i+sides+4].Polygons.Add(polygon);
-                mesh.Vertices[i+sides+3].Polygons.Add(polygon);
-                mesh.Vertices[sides+2].Polygons.Add(polygon);
-                mesh.Polygons.Add(polygon);
+                mesh.Polygons.Add(new Polygon(mesh.Vertices[i+sides+4], mesh.Vertices[i+sides+3], mesh.Vertices[sides+2], material));
             }
             for (int i = 1; i <= sides; ++i)
             {
-                var polygon = new Polygon(mesh.Vertices[i+1], mesh.Vertices[i], mesh.Vertices[i+sides+2], mesh.Vertices[i+sides+3], material);
-                mesh.Vertices[i+1].Polygons.Add(polygon);
-                mesh.Vertices[i].Polygons.Add(polygon);
-                mesh.Vertices[i+sides+2].Polygons.Add(polygon);
-                mesh.Vertices[i+sides+3].Polygons.Add(polygon);
-                mesh.Polygons.Add(polygon);
+                mesh.Polygons.Add(new Polygon(mesh.Vertices[i+1], mesh.Vertices[i], mesh.Vertices[i+sides+2], mesh.Vertices[i+sides+3], material));
             }
             mesh.CalculateVerticesNormals();
         }
@@ -256,6 +254,7 @@ namespace Primitives
                 new Polygon(mesh.Vertices[7], mesh.Vertices[6], mesh.Vertices[2], mesh.Vertices[3], material),
                 new Polygon(mesh.Vertices[4], mesh.Vertices[7], mesh.Vertices[3], mesh.Vertices[0], material),
             };
+            mesh.CalculateVerticesNormals();
         }
         
         public static void Octahedron(Mesh mesh, Material material)
@@ -278,6 +277,7 @@ namespace Primitives
                 new Polygon(mesh.Vertices[4], mesh.Vertices[5], mesh.Vertices[3], material),
                 new Polygon(mesh.Vertices[3], mesh.Vertices[5], mesh.Vertices[2], material)
             };
+            mesh.CalculateVerticesNormals();
         }
     }
 }
