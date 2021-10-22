@@ -5,6 +5,7 @@ using System.Numerics;
 using Cairo;
 using Gtk;
 using UI = Gtk.Builder.ObjectAttribute;
+using CG;
 
 using Extensions;
 using Gdk;
@@ -31,7 +32,8 @@ namespace lab3
         [UI] private CheckButton _showNormals = null;
         [UI] private ComboBoxText _models = null;
         [UI] private ComboBoxText _projections = null;
-        [UI] private Adjustment _sides = null;
+        [UI] private Adjustment _sidesX = null;
+        [UI] private Adjustment _sidesY = null;
         [UI] private Adjustment _radius = null;
         [UI] private Adjustment _height = null;
         [UI] private Adjustment _p = null;
@@ -45,6 +47,7 @@ namespace lab3
         [UI] private Adjustment _k = null;
         [UI] private CheckButton _showPointLight = null;
         [UI] private ComboBoxText _shading = null;
+        [UI] private CheckButton _showVertexNormals = null;
 
         private Matrix4x4 _worldMatrix;
         private Matrix4x4 _viewMatrix;
@@ -52,6 +55,7 @@ namespace lab3
         private Material _material;
         private AmbientLight _ambientLight;
         private PointLight _pointLight;
+        private CairoSurface _surface;
 
         private Vector2 _pointerPos;
         private int _pointerButton = -1;
@@ -83,6 +87,7 @@ namespace lab3
         {
             None,
             Flat,
+            Gouraud
         }
         
         public MainWindow() : this(new Builder("MainWindow.glade"))
@@ -93,17 +98,18 @@ namespace lab3
                 0, 0, 1, 0,
                 0, 0, 0, 1);
             _object = new Mesh();
-            _material = new Material(new Vector3( 0.68f, 0.85f, 0.90f), new Vector3(0.11f, 0.14f, 0.20f), new Vector3(1, 1, 0.54f), new Vector3(0.21f, 0.21f, 1), 1);
+            _material = new Material(new Vector3( 0.84f, 0.43f, 0.4f), new Vector3(0.3f, 0.3f, 0.3f), new Vector3(0.5f, 0.5f, 0.5f), new Vector3(0.5f, 0.5f, 0.5f), 1);
             _ambientLight = new AmbientLight(new Vector3(1, 1, 1));
-            _pointLight = new PointLight(new Vector3(1, 0.5f, 0), new Vector4(0, 0, 2, 1), 1);
+            _pointLight = new PointLight(new Vector3(1, 1, 1), new Vector4(0, 3, 6, 1), 0.7f);
             
-            _sides.Value = 20;
+            _sidesX.Value = 30;
+            _sidesY.Value = 20;
             _height.Value = 2;
             _radius.Value = 1;
             
             _models.Active = (int)Model.Cylinder;
             _projections.Active = (int)Projection.None;
-            _shading.Active = (int)Shading.Flat;
+            _shading.Active = (int)Shading.Gouraud;
             CalculateWorldMatrix();
             
             _p.Value = _material.P;
@@ -140,6 +146,7 @@ namespace lab3
                 Application.Quit();
             };
 
+            _surface = new CairoSurface(_canvas);
             _canvas.Events |= EventMask.ScrollMask | EventMask.PointerMotionMask | EventMask.ButtonPressMask |
                               EventMask.ButtonReleaseMask;
             _canvas.Drawn += CanvasDrawnHandler;
@@ -196,6 +203,7 @@ namespace lab3
             _wireframe.Toggled += (o, args) => { _canvas.QueueDraw(); };
             _hideInvisible.Toggled += (o, args) => { _canvas.QueueDraw(); };
             _showNormals.Toggled += (o, args) => { _canvas.QueueDraw(); };
+            _showVertexNormals.Toggled += (o, args) => { _canvas.QueueDraw(); };
 
             _fileChooser = new FileChooserDialog("Choose .obj file", (Window) this.Toplevel, 
                 FileChooserAction.Open, 
@@ -230,7 +238,7 @@ namespace lab3
                     _models.Active = -1;
                 }
                 else if (_models.Active == (int)Model.Cylinder)
-                    PrimitiveForms.Prism((int)_sides.Value, (float)_height.Value, (float)_radius.Value, _object, _material);
+                    PrimitiveForms.Prism((int)_sidesX.Value, (int)_sidesY.Value, (float)_height.Value, (float)_radius.Value, _object, _material);
                 else if (_models.Active == (int)Model.Cube)
                     PrimitiveForms.Cube(_object, _material);
                 else if (_models.Active == (int)Model.Octahedron)
@@ -259,11 +267,20 @@ namespace lab3
             _yShift.ValueChanged += (o, args) => { CalculateWorldMatrix(); };
             _zShift.ValueChanged += (o, args) => { CalculateWorldMatrix(); };
 
-            _sides.ValueChanged += (_, _) =>
+            _sidesX.ValueChanged += (_, _) =>
             {
                 if (_models.Active == (int)Model.Cylinder)
                 {
-                    PrimitiveForms.Prism((int)_sides.Value, (float)_height.Value, (float)_radius.Value, _object, _material);
+                    PrimitiveForms.Prism((int)_sidesX.Value, (int)_sidesY.Value, (float)_height.Value, (float)_radius.Value, _object, _material);
+                    TransformToWorld();
+                    _canvas.QueueDraw();
+                }
+            };
+            _sidesY.ValueChanged += (_, _) =>
+            {
+                if (_models.Active == (int)Model.Cylinder)
+                {
+                    PrimitiveForms.Prism((int)_sidesX.Value, (int)_sidesY.Value, (float)_height.Value, (float)_radius.Value, _object, _material);
                     TransformToWorld();
                     _canvas.QueueDraw();
                 }
@@ -272,7 +289,7 @@ namespace lab3
             {
                 if (_models.Active == (int)Model.Cylinder)
                 {
-                    PrimitiveForms.Prism((int)_sides.Value, (float)_height.Value, (float)_radius.Value, _object, _material);
+                    PrimitiveForms.Prism((int)_sidesX.Value, (int)_sidesY.Value, (float)_height.Value, (float)_radius.Value, _object, _material);
                     TransformToWorld();
                     _canvas.QueueDraw();
                 }
@@ -281,7 +298,7 @@ namespace lab3
             {
                 if (_models.Active == (int)Model.Cylinder)
                 {
-                    PrimitiveForms.Prism((int)_sides.Value, (float)_height.Value, (float)_radius.Value, _object, _material);
+                    PrimitiveForms.Prism((int)_sidesX.Value, (int)_sidesY.Value, (float)_height.Value, (float)_radius.Value, _object, _material);
                     TransformToWorld();
                     _canvas.QueueDraw();
                 }
@@ -290,6 +307,7 @@ namespace lab3
             _shading.RemoveAll();
             _shading.Append(Shading.None.ToString(), "None");
             _shading.Append(Shading.Flat.ToString(), "Flat");
+            _shading.Append(Shading.Gouraud.ToString(), "Gouraud");
             _shading.Changed += (_, _) => { _canvas.QueueDraw(); };
 
             _p.ValueChanged += (_, _) => { _material.P = (float) _p.Value; _canvas.QueueDraw(); };
@@ -410,7 +428,7 @@ namespace lab3
             Vector4 toViewer = Vector4.Normalize(-_viewDirection);
             Vector3 specular = (Vector4.Dot(toLight, normal) > 0 ? 1 : 0) * _pointLight.Intensity * material.Ks *
                                (float)Math.Pow(Math.Max(Vector4.Dot(reflect, toViewer), 0), material.P);
-
+            
             return material.Color * (ambient + (diffuse + specular) / (maxZ - point.Z + _pointLight.K));
         }
             
@@ -426,43 +444,77 @@ namespace lab3
             cr.Paint();
 
             float maxZ = _object.Vertices.Select((a) => a.PointInWorld.Z).Max();
+                
+            if (_shading.Active == (int) Shading.Gouraud)
+                _surface.BeginUpdate(cr);    
             
-            cr.SetSourceColor(LINE_COLOR);
             foreach (var polygon in _object.Polygons)
             {
                 if (Vector4.Dot(polygon.NormalInWorld, _viewDirection) > 0 && _hideInvisible.Active)
                     continue;
-                
+
+                Vector4 center = polygon.Vertices[0].PointInWorld;
                 cr.MoveTo(TransformToView(polygon.Vertices[0].PointInWorld));
                 for (int i = 1; i < polygon.Vertices.Length; ++i)
                 {
+                    center += polygon.Vertices[i].PointInWorld;
                     cr.LineTo(TransformToView(polygon.Vertices[i].PointInWorld));
                 }
-                cr.ClosePath();
-                cr.Save();
-
-                Vector4 center = Vector4.Zero;
-                foreach (var vertex in polygon.Vertices)
-                {
-                    center += vertex.PointInWorld;
-                }
                 center /= polygon.Vertices.Length;
+                cr.ClosePath();
+                cr.SetSourceColor(LINE_COLOR);
                 
                 if (_fillPolygons)
                 {
                     if (_shading.Active == (int) Shading.None)
                     {
                         cr.SetSourceRGB(polygon.Material.Color.X, polygon.Material.Color.Y, polygon.Material.Color.Z);
-                        cr.FillPreserve();
+                        cr.Fill();
                     }
                     else if (_shading.Active == (int) Shading.Flat)
                     {
                         var color = GetPointColor(center, polygon.NormalInWorld, polygon.Material, maxZ);
                         cr.SetSourceRGB(color.X, color.Y, color.Z);
-                        cr.FillPreserve();
+                        cr.Fill();
+                    }
+                    else if (_shading.Active == (int) Shading.Gouraud)
+                    {
+                        cr.NewPath();
+                        List<Vector3> colors = new();
+                        foreach (Vertex vertex in polygon.Vertices)
+                        {
+                            colors.Add(GetPointColor(vertex.PointInWorld, vertex.NormalInWorld, polygon.Material, maxZ));
+                        }
+
+                        var point1 = TransformToView(polygon.Vertices[0].PointInWorld);
+                        for (int i = 1; i < polygon.Vertices.Length - 1; ++i)
+                        {
+                            var point2 = TransformToView(polygon.Vertices[i].PointInWorld);
+                            var point3 = TransformToView(polygon.Vertices[i+1].PointInWorld);
+                            _surface.DrawTriangle(colors[0], point1, colors[i], point2, colors[i+1], point3);
+                        }
                     }
                 }
-                cr.Restore();
+            }
+            if (_shading.Active == (int) Shading.Gouraud)
+                _surface.EndUpdate();
+
+            foreach (var polygon in _object.Polygons)
+            {
+                if (Vector4.Dot(polygon.NormalInWorld, _viewDirection) > 0 && _hideInvisible.Active)
+                    continue;
+                
+                Vector4 center = polygon.Vertices[0].PointInWorld;
+                cr.MoveTo(TransformToView(polygon.Vertices[0].PointInWorld));
+                for (int i = 1; i < polygon.Vertices.Length; ++i)
+                {
+                    center += polygon.Vertices[i].PointInWorld;
+                    cr.LineTo(TransformToView(polygon.Vertices[i].PointInWorld));
+                }
+                center /= polygon.Vertices.Length;
+                cr.ClosePath();
+                cr.SetSourceColor(LINE_COLOR);
+
                 if (_wireframe.Active)
                     cr.Stroke();
                 else
@@ -483,8 +535,37 @@ namespace lab3
                     cr.Stroke();
                     cr.Restore();
                 }
-
             }
+            
+            if (_showVertexNormals.Active)
+            {
+                cr.SetSourceColor(NORMAL_COLOR);
+                foreach (Vertex vertex in _object.Vertices)
+                {
+                    bool visible = false;
+                    foreach (Polygon polygon in vertex.Polygons)
+                    {
+                        if (Vector4.Dot(_viewDirection, polygon.NormalInWorld) <= 0)
+                        {
+                            visible = true;
+                            break;
+                        }
+                    }
+
+                    if (!visible)
+                        continue;
+                    
+                    cr.MoveTo(TransformToView(vertex.PointInWorld));
+                    var viewNormal = TransformToView(vertex.NormalInWorld);
+                    if (viewNormal.Length() > NormalLength)
+                    {
+                        viewNormal = Vector2.Normalize(viewNormal) * NormalLength;
+                    }
+                    cr.RelLineTo(viewNormal);
+                    cr.Stroke();
+                }
+            }
+            
             if (_showPointLight.Active)
             {
                 cr.SetSourceRGB(1, 1, 1);

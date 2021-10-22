@@ -210,31 +210,49 @@ namespace Primitives
             file.Close();
         }
 
-        public static void Prism(int sides, float height, float radius, Mesh mesh, Material material)
+        public static void Prism(int sidesX, int sidesY, float height, float radius, Mesh mesh, Material material)
         {
             mesh.Vertices.Clear();
             mesh.Polygons.Clear();
+            var dh = height / sidesY;
+            var dphi = 2 * Math.PI / sidesX;
             height /= 2;
-            var dphi = 2 * Math.PI / sides;
             var rotation = Matrix4x4.CreateRotationY((float) dphi);
-            mesh.Vertices.Add(new Vertex(0, height, 0));
+            var highCenter = new Vertex(0, height, 0);
+            var lowCenter = new Vertex(0, height - dh * sidesY, 0);
             mesh.Vertices.Add(new Vertex(radius, height, 0));
-            for (int i = 0; i < sides; ++i)
+            for (int i = 1; i < sidesX; ++i)
             {
                 mesh.Vertices.Add(new Vertex(Vector4.Transform(mesh.Vertices.Last().Point, rotation)));
-                mesh.Polygons.Add(new Polygon(mesh.Vertices[i+1], mesh.Vertices[i+2], mesh.Vertices[0], material));
+                mesh.Polygons.Add(new Polygon(mesh.Vertices[i-1], mesh.Vertices[i], highCenter, material));
             }
-            mesh.Vertices.Add(new Vertex(0, -height, 0));
-            mesh.Vertices.Add(new Vertex(radius, -height, 0));
-            for (int i = 0; i < sides; ++i)
+            mesh.Polygons.Add(new Polygon(mesh.Vertices[sidesX-1], mesh.Vertices[0], highCenter, material));
+
+            for (int i = 1; i < sidesY+1; ++i)
             {
-                mesh.Vertices.Add(new Vertex(Vector4.Transform(mesh.Vertices.Last().Point, rotation)));
-                mesh.Polygons.Add(new Polygon(mesh.Vertices[i+sides+4], mesh.Vertices[i+sides+3], mesh.Vertices[sides+2], material));
+                for (int j = 0; j < sidesX; ++j)
+                {
+                    mesh.Vertices.Add(new Vertex(mesh.Vertices[(i-1)*sidesX + j].Point));
+                    mesh.Vertices[^1].Point.Y -= dh;
+                }
             }
-            for (int i = 1; i <= sides; ++i)
+            
+            for (int i = 1; i < sidesY+1; ++i)
             {
-                mesh.Polygons.Add(new Polygon(mesh.Vertices[i+1], mesh.Vertices[i], mesh.Vertices[i+sides+2], mesh.Vertices[i+sides+3], material));
+                for (int j = 1; j < sidesX; ++j)
+                {
+                    mesh.Polygons.Add(new Polygon(mesh.Vertices[(i-1)*sidesX + j], mesh.Vertices[(i-1)*sidesX + j-1], mesh.Vertices[i*sidesX + j-1], mesh.Vertices[i*sidesX + j], material));
+                }
+                mesh.Polygons.Add(new Polygon(mesh.Vertices[(i-1)*sidesX], mesh.Vertices[(i-1)*sidesX + sidesX-1], mesh.Vertices[i*sidesX + sidesX-1], mesh.Vertices[i*sidesX], material));
             }
+            
+            for (int i = 1; i < sidesX; ++i)
+            {
+                mesh.Polygons.Add(new Polygon(mesh.Vertices[^i], mesh.Vertices[^(i+1)], lowCenter, material));
+            }
+            mesh.Polygons.Add(new Polygon(mesh.Vertices[^sidesX], mesh.Vertices[^1], lowCenter, material));
+            mesh.Vertices.Add(highCenter);
+            mesh.Vertices.Add(lowCenter);
             mesh.CalculateVerticesNormals();
         }
 

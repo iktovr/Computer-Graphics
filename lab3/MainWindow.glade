@@ -114,7 +114,6 @@
     <property name="page-increment">1</property>
   </object>
   <object class="GtkAdjustment" id="_height">
-    <property name="lower">-100</property>
     <property name="upper">100</property>
     <property name="step-increment">0.10</property>
     <property name="page-increment">1</property>
@@ -229,7 +228,13 @@
     <property name="step-increment">0.10</property>
     <property name="page-increment">1</property>
   </object>
-  <object class="GtkAdjustment" id="_sides">
+  <object class="GtkAdjustment" id="_sidesX">
+    <property name="lower">1</property>
+    <property name="upper">1024</property>
+    <property name="step-increment">1</property>
+    <property name="page-increment">10</property>
+  </object>
+  <object class="GtkAdjustment" id="_sidesY">
     <property name="lower">1</property>
     <property name="upper">1024</property>
     <property name="step-increment">1</property>
@@ -853,7 +858,7 @@
                 <property name="expanded">True</property>
                 <property name="spacing">5</property>
                 <child>
-                  <!-- n-columns=3 n-rows=5 -->
+                  <!-- n-columns=3 n-rows=6 -->
                   <object class="GtkGrid">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
@@ -957,11 +962,25 @@
                             <property name="position">3</property>
                           </packing>
                         </child>
+                        <child>
+                          <object class="GtkCheckButton" id="_showVertexNormals">
+                            <property name="label" translatable="yes">Show vertex normals</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">True</property>
+                            <property name="receives-default">False</property>
+                            <property name="draw-indicator">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">4</property>
+                          </packing>
+                        </child>
                       </object>
                       <packing>
                         <property name="left-attach">0</property>
                         <property name="top-attach">1</property>
-                        <property name="height">3</property>
+                        <property name="height">5</property>
                       </packing>
                     </child>
                     <child>
@@ -976,14 +995,24 @@
                       </packing>
                     </child>
                     <child>
+                      <object class="GtkComboBoxText" id="_shading">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                      </object>
+                      <packing>
+                        <property name="left-attach">1</property>
+                        <property name="top-attach">3</property>
+                      </packing>
+                    </child>
+                    <child>
                       <object class="GtkLabel" id="models_label">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
                         <property name="label" translatable="yes">Model</property>
                       </object>
                       <packing>
-                        <property name="left-attach">2</property>
-                        <property name="top-attach">0</property>
+                        <property name="left-attach">1</property>
+                        <property name="top-attach">4</property>
                       </packing>
                     </child>
                     <child>
@@ -992,22 +1021,33 @@
                         <property name="can-focus">False</property>
                       </object>
                       <packing>
-                        <property name="left-attach">2</property>
-                        <property name="top-attach">1</property>
+                        <property name="left-attach">1</property>
+                        <property name="top-attach">5</property>
                       </packing>
                     </child>
                     <child>
-                      <!-- n-columns=2 n-rows=3 -->
+                      <object class="GtkLabel" id="cylinder_label">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="label" translatable="yes">Cylinder</property>
+                      </object>
+                      <packing>
+                        <property name="left-attach">2</property>
+                        <property name="top-attach">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <!-- n-columns=2 n-rows=4 -->
                       <object class="GtkGrid" id="cylinder">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
                         <property name="row-spacing">5</property>
                         <property name="column-spacing">5</property>
                         <child>
-                          <object class="GtkLabel" id="sides_label">
+                          <object class="GtkLabel" id="sidesX_label">
                             <property name="visible">True</property>
                             <property name="can-focus">False</property>
-                            <property name="label" translatable="yes">Sides</property>
+                            <property name="label" translatable="yes">Sides X</property>
                           </object>
                           <packing>
                             <property name="left-attach">0</property>
@@ -1015,37 +1055,14 @@
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkSpinButton" id="sides_entry">
+                          <object class="GtkSpinButton" id="sidesX_entry">
                             <property name="visible">True</property>
                             <property name="can-focus">True</property>
-                            <property name="adjustment">_sides</property>
+                            <property name="adjustment">_sidesX</property>
                           </object>
                           <packing>
                             <property name="left-attach">1</property>
                             <property name="top-attach">0</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkLabel" id="radius_label">
-                            <property name="visible">True</property>
-                            <property name="can-focus">False</property>
-                            <property name="label" translatable="yes">Radius</property>
-                          </object>
-                          <packing>
-                            <property name="left-attach">0</property>
-                            <property name="top-attach">1</property>
-                          </packing>
-                        </child>
-                        <child>
-                          <object class="GtkSpinButton" id="radius_entry">
-                            <property name="visible">True</property>
-                            <property name="can-focus">True</property>
-                            <property name="adjustment">_radius</property>
-                            <property name="digits">1</property>
-                          </object>
-                          <packing>
-                            <property name="left-attach">1</property>
-                            <property name="top-attach">1</property>
                           </packing>
                         </child>
                         <child>
@@ -1056,7 +1073,7 @@
                           </object>
                           <packing>
                             <property name="left-attach">0</property>
-                            <property name="top-attach">2</property>
+                            <property name="top-attach">3</property>
                           </packing>
                         </child>
                         <child>
@@ -1068,31 +1085,60 @@
                           </object>
                           <packing>
                             <property name="left-attach">1</property>
+                            <property name="top-attach">3</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="radius_label">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">Radius</property>
+                          </object>
+                          <packing>
+                            <property name="left-attach">0</property>
                             <property name="top-attach">2</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkSpinButton" id="radius_entry">
+                            <property name="visible">True</property>
+                            <property name="can-focus">True</property>
+                            <property name="adjustment">_radius</property>
+                            <property name="digits">1</property>
+                          </object>
+                          <packing>
+                            <property name="left-attach">1</property>
+                            <property name="top-attach">2</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkSpinButton" id="sidesY_labe">
+                            <property name="visible">True</property>
+                            <property name="can-focus">True</property>
+                            <property name="adjustment">_sidesY</property>
+                          </object>
+                          <packing>
+                            <property name="left-attach">1</property>
+                            <property name="top-attach">1</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkLabel" id="sidesY_label">
+                            <property name="visible">True</property>
+                            <property name="can-focus">False</property>
+                            <property name="label" translatable="yes">Sides Y</property>
+                          </object>
+                          <packing>
+                            <property name="left-attach">0</property>
+                            <property name="top-attach">1</property>
                           </packing>
                         </child>
                       </object>
                       <packing>
                         <property name="left-attach">2</property>
-                        <property name="top-attach">2</property>
-                        <property name="height">3</property>
+                        <property name="top-attach">1</property>
+                        <property name="height">5</property>
                       </packing>
-                    </child>
-                    <child>
-                      <object class="GtkComboBoxText" id="_shading">
-                        <property name="visible">True</property>
-                        <property name="can-focus">False</property>
-                      </object>
-                      <packing>
-                        <property name="left-attach">1</property>
-                        <property name="top-attach">3</property>
-                      </packing>
-                    </child>
-                    <child>
-                      <placeholder/>
-                    </child>
-                    <child>
-                      <placeholder/>
                     </child>
                   </object>
                 </child>
