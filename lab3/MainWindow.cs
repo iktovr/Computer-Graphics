@@ -98,9 +98,9 @@ namespace lab3
                 0, 0, 1, 0,
                 0, 0, 0, 1);
             _object = new Mesh();
-            _material = new Material(new Vector3( 0.84f, 0.43f, 0.4f), new Vector3(0.3f, 0.3f, 0.3f), new Vector3(0.5f, 0.5f, 0.5f), new Vector3(0.5f, 0.5f, 0.5f), 1);
+            _material = new Material(new Vector3( 0.84f, 0.43f, 0.4f), new Vector3(0.3f, 0.3f, 0.3f), new Vector3(0.7f, 0.7f, 0.7f), new Vector3(0.7f, 0.7f, 0.7f), 1);
             _ambientLight = new AmbientLight(new Vector3(1, 1, 1));
-            _pointLight = new PointLight(new Vector3(1, 1, 1), new Vector4(0, 3, 6, 1), 0.7f);
+            _pointLight = new PointLight(new Vector3(1, 1, 1), new Vector4(0, 1, 2.5f, 1), 0.1f);
             
             _sidesX.Value = 30;
             _sidesY.Value = 20;
@@ -417,11 +417,12 @@ namespace lab3
 
         private readonly Vector4 _viewDirection = new Vector4(0, 0, -1, 0);
 
-        private Vector3 GetPointColor(Vector4 point, Vector4 normal, Material material, float maxZ)
+        private Vector3 GetPointColor(Vector4 point, Vector4 normal, Material material)
         {
             Vector3 ambient = _ambientLight.Intensity * material.Ka;
-            
-            Vector4 toLight = Vector4.Normalize(Vector4.Transform(_pointLight.Point, _worldMatrix) - point);
+
+            Vector4 light = Vector4.Transform(_pointLight.Point, _worldMatrix);
+            Vector4 toLight = Vector4.Normalize(light - point);
             Vector3 diffuse = _pointLight.Intensity * material.Kd * Math.Max(Vector4.Dot(toLight, Vector4.Normalize(normal)), 0);
 
             Vector4 reflect = Vector4.Normalize(2 * Vector4.Dot(toLight, normal) * normal - toLight);
@@ -429,7 +430,7 @@ namespace lab3
             Vector3 specular = (Vector4.Dot(toLight, normal) > 0 ? 1 : 0) * _pointLight.Intensity * material.Ks *
                                (float)Math.Pow(Math.Max(Vector4.Dot(reflect, toViewer), 0), material.P);
             
-            return material.Color * (ambient + (diffuse + specular) / (maxZ - point.Z + _pointLight.K));
+            return material.Color * (ambient + (diffuse + specular) / ((light - point).Length() + _pointLight.K));
         }
             
         private const int NormalLength = 20;
@@ -443,8 +444,6 @@ namespace lab3
             cr.SetSourceColor(BACKGROUND_COLOR);
             cr.Paint();
 
-            float maxZ = _object.Vertices.Select((a) => a.PointInWorld.Z).Max();
-                
             if (_shading.Active == (int) Shading.Gouraud)
                 _surface.BeginUpdate(cr);    
             
@@ -473,7 +472,7 @@ namespace lab3
                     }
                     else if (_shading.Active == (int) Shading.Flat)
                     {
-                        var color = GetPointColor(center, polygon.NormalInWorld, polygon.Material, maxZ);
+                        var color = GetPointColor(center, polygon.NormalInWorld, polygon.Material);
                         cr.SetSourceRGB(color.X, color.Y, color.Z);
                         cr.Fill();
                     }
@@ -483,7 +482,7 @@ namespace lab3
                         List<Vector3> colors = new();
                         foreach (Vertex vertex in polygon.Vertices)
                         {
-                            colors.Add(GetPointColor(vertex.PointInWorld, vertex.NormalInWorld, polygon.Material, maxZ));
+                            colors.Add(GetPointColor(vertex.PointInWorld, vertex.NormalInWorld, polygon.Material));
                         }
 
                         var point1 = TransformToView(polygon.Vertices[0].PointInWorld);
