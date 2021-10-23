@@ -423,11 +423,11 @@ namespace lab3
 
             Vector4 light = Vector4.Transform(_pointLight.Point, _worldMatrix);
             Vector4 toLight = Vector4.Normalize(light - point);
-            Vector3 diffuse = _pointLight.Intensity * material.Kd * Math.Max(Vector4.Dot(toLight, Vector4.Normalize(normal)), 0);
+            Vector3 diffuse = _pointLight.Intensity * material.Kd * Math.Max(Vector4.Dot(toLight, normal), 0);
 
             Vector4 reflect = Vector4.Normalize(2 * Vector4.Dot(toLight, normal) * normal - toLight);
             Vector4 toViewer = Vector4.Normalize(-_viewDirection);
-            Vector3 specular = (Vector4.Dot(toLight, normal) > 0 ? 1 : 0) * _pointLight.Intensity * material.Ks *
+            Vector3 specular = (Vector4.Dot(toLight, normal) > 1e-6 ? 1 : 0) * _pointLight.Intensity * material.Ks *
                                (float)Math.Pow(Math.Max(Vector4.Dot(reflect, toViewer), 0), material.P);
             
             return material.Color * (ambient + (diffuse + specular) / ((light - point).Length() + _pointLight.K));
