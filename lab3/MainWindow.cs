@@ -44,7 +44,7 @@ namespace lab3
         [UI] private Adjustment _ambientR = null; [UI] private Adjustment _ambientG = null; [UI] private Adjustment _ambientB = null;
         [UI] private Adjustment _pointR = null; [UI] private Adjustment _pointG = null; [UI] private Adjustment _pointB = null;
         [UI] private Adjustment _lightX = null; [UI] private Adjustment _lightY = null; [UI] private Adjustment _lightZ = null;
-        [UI] private Adjustment _k = null;
+        [UI] private Adjustment _attenuation = null;
         [UI] private CheckButton _showPointLight = null;
         [UI] private ComboBoxText _shading = null;
         [UI] private CheckButton _showVertexNormals = null;
@@ -100,7 +100,7 @@ namespace lab3
             _object = new Mesh();
             _material = new Material(new Vector3( 0.84f, 0.43f, 0.4f), new Vector3(0.3f, 0.3f, 0.3f), new Vector3(0.7f, 0.7f, 0.7f), new Vector3(0.7f, 0.7f, 0.7f), 1);
             _ambientLight = new AmbientLight(new Vector3(1, 1, 1));
-            _pointLight = new PointLight(new Vector3(1, 1, 1), new Vector4(0, 1, 2.5f, 1), 0.1f);
+            _pointLight = new PointLight(new Vector3(1, 1, 1), new Vector4(0, 1, 2.5f, 1), 0.05f);
             
             _sidesX.Value = 30;
             _sidesY.Value = 20;
@@ -134,7 +134,7 @@ namespace lab3
             _lightX.Value = _pointLight.Point.X;
             _lightY.Value = _pointLight.Point.Y;
             _lightZ.Value = _pointLight.Point.Z;
-            _k.Value = _pointLight.K;
+            _attenuation.Value = _pointLight.Attenuation;
         }
 
         private MainWindow(Builder builder) : base(builder.GetRawOwnedObject("MainWindow"))
@@ -332,7 +332,7 @@ namespace lab3
             _lightX.ValueChanged += (_, _) => { _pointLight.Point.X = (float) _lightX.Value; _canvas.QueueDraw(); };
             _lightY.ValueChanged += (_, _) => { _pointLight.Point.Y = (float) _lightY.Value; _canvas.QueueDraw(); };
             _lightZ.ValueChanged += (_, _) => { _pointLight.Point.Z = (float) _lightZ.Value; _canvas.QueueDraw(); };
-            _k.ValueChanged += (_, _) => { _pointLight.K = (float) _k.Value; _canvas.QueueDraw(); };
+            _attenuation.ValueChanged += (_, _) => { _pointLight.Attenuation = (float) _attenuation.Value; _canvas.QueueDraw(); };
             _showPointLight.Toggled += (_, _) => { _canvas.QueueDraw(); };
             CreateMatrixView();
         }
@@ -397,12 +397,12 @@ namespace lab3
             foreach (var vertex in _object.Vertices)
             {
                 vertex.PointInWorld = Vector4.Transform(vertex.Point, _worldMatrix);
-                vertex.NormalInWorld = Vector4.Transform(vertex.Normal, normalMatrix);
+                vertex.NormalInWorld = Vector4.Normalize(Vector4.Normalize(Vector4.Transform(vertex.Normal, normalMatrix)));
             }
 
             foreach (var polygon in _object.Polygons)
             {
-                polygon.NormalInWorld = Vector4.Transform(polygon.Normal, normalMatrix);
+                polygon.NormalInWorld = Vector4.Normalize(Vector4.Normalize(Vector4.Transform(polygon.Normal, normalMatrix)));
             }
             
             if (_zBuffer.Active)
@@ -429,8 +429,10 @@ namespace lab3
             Vector4 toViewer = Vector4.Normalize(-_viewDirection);
             Vector3 specular = (Vector4.Dot(toLight, normal) > 1e-6 ? 1 : 0) * _pointLight.Intensity * material.Ks *
                                (float)Math.Pow(Math.Max(Vector4.Dot(reflect, toViewer), 0), material.P);
+
+            float attenuation = 1 / (1 + _pointLight.Attenuation * (light - point).LengthSquared());
             
-            return material.Color * (ambient + (diffuse + specular) / ((light - point).Length() + _pointLight.K));
+            return material.Color * (ambient + (diffuse + specular) * attenuation);
         }
             
         private const int NormalLength = 20;

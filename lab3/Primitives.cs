@@ -148,13 +148,13 @@ namespace Primitives
     {
         public Vector4 Point;
         public Vector3 Intensity;
-        public float K;
+        public float Attenuation;
 
-        public PointLight(Vector3 intensity, Vector4 point, float k)
+        public PointLight(Vector3 intensity, Vector4 point, float attenuation)
         {
             Intensity = intensity;
             Point = point;
-            K = k;
+            Attenuation = attenuation;
         }
     }
 
