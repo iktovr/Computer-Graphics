@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <!-- ЗАМЕНИТЬ КОНСТАНТУ НА LINUX WINDOWS или MACOS в зависимости от используемой ОС -->
+        <DefineConstants>TRACE;WINDOWS</DefineConstants>
+    </PropertyGroup>
+    
+    <ItemGroup>
+        <Content Remove="Gtk\**" />
+        <Compile Remove="Gtk\**" />
+        <EmbeddedResource Remove="Gtk\**" />
+        <None Remove="Gtk\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <EmbeddedResource Include="**\*.glsl;**\*.frag;**\*.vert">
+            <LogicalName>%(Filename)%(Extension)</LogicalName>
+        </EmbeddedResource>
+    </ItemGroup>
+    
+</Project>
