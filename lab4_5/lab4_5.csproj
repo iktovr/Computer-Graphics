@@ -11,11 +11,22 @@
             <LogicalName>%(Filename)%(Extension)</LogicalName>
         </EmbeddedResource>
         <None Remove="shader.frag" />
-        <EmbeddedResource Include="shader.frag" />
         <None Remove="shader.vert" />
-        <EmbeddedResource Include="shader.vert" />
         <EmbeddedResource Remove="CGPlatform\**" />
         <None Remove="CGPlatform\**" />
+        <None Remove="normals.glsl" />
+        <EmbeddedResource Include="normals.glsl" />
+        <None Remove="phong.frag" />
+        <EmbeddedResource Include="phong.frag" />
+        <None Remove="lightTrace.glsl" />
+        <None Remove="gauraud.frag" />
+        <EmbeddedResource Include="gouraud.frag" />
+        <None Remove="gauraud.vert" />
+        <EmbeddedResource Include="gouraud.vert" />
+        <None Remove="base.frag" />
+        <EmbeddedResource Include="base.frag" />
+        <None Remove="base.vert" />
+        <EmbeddedResource Include="base.vert" />
     </ItemGroup>
 
     <ItemGroup>

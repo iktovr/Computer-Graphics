@@ -16,6 +16,11 @@ namespace Extensions
             }
         }
 
+        public static float[] ToArray(this Vector3 vec)
+        {
+            return new float[] {vec.X, vec.Y, vec.Z};
+        }
+
         public static float[] ToArray(this Matrix4x4 m)
         {
             return new float[]

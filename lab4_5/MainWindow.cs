@@ -35,31 +35,33 @@ namespace lab4_5
         [UI] private Button _rollLeft = null;
         [UI] private Button _rollRight = null;
         [UI] private CheckButton _wireframe = null;
-        // [UI] private CheckButton _showNormals = null;
+        [UI] private CheckButton _showNormals = null;
+        [UI] private CheckButton _fillPolygons = null;
         [UI] private ComboBoxText _models = null;
         [UI] private ComboBoxText _shading = null;
         [UI] private Adjustment _sidesX = null;
         [UI] private Adjustment _sidesY = null;
         [UI] private Adjustment _radius = null;
         [UI] private Adjustment _height = null;
-        // [UI] private Adjustment _p = null;
+        [UI] private Adjustment _p = null;
         [UI] private Adjustment _materialR = null; [UI] private Adjustment _materialG = null; [UI] private Adjustment _materialB = null;
-        // [UI] private Adjustment _kaR = null; [UI] private Adjustment _kaG = null; [UI] private Adjustment _kaB = null;
-        // [UI] private Adjustment _kdR = null; [UI] private Adjustment _kdG = null; [UI] private Adjustment _kdB = null;
-        // [UI] private Adjustment _ksR = null; [UI] private Adjustment _ksG = null; [UI] private Adjustment _ksB = null;
-        // [UI] private Adjustment _ambientR = null; [UI] private Adjustment _ambientG = null; [UI] private Adjustment _ambientB = null;
-        // [UI] private Adjustment _pointR = null; [UI] private Adjustment _pointG = null; [UI] private Adjustment _pointB = null;
-        // [UI] private Adjustment _lightX = null; [UI] private Adjustment _lightY = null; [UI] private Adjustment _lightZ = null;
-        // [UI] private Adjustment _attenuation = null;
-        // [UI] private CheckButton _showPointLight = null;
+        [UI] private Adjustment _kaR = null; [UI] private Adjustment _kaG = null; [UI] private Adjustment _kaB = null;
+        [UI] private Adjustment _kdR = null; [UI] private Adjustment _kdG = null; [UI] private Adjustment _kdB = null;
+        [UI] private Adjustment _ksR = null; [UI] private Adjustment _ksG = null; [UI] private Adjustment _ksB = null;
+        [UI] private Adjustment _ambientR = null; [UI] private Adjustment _ambientG = null; [UI] private Adjustment _ambientB = null;
+        [UI] private Adjustment _pointR = null; [UI] private Adjustment _pointG = null; [UI] private Adjustment _pointB = null;
+        [UI] private Adjustment _lightX = null; [UI] private Adjustment _lightY = null; [UI] private Adjustment _lightZ = null;
+        [UI] private Adjustment _attenuation = null;
+        [UI] private CheckButton _showPointLight = null;
 
         private Mesh _object;
         private Material _material;
         private Camera _camera;
-        // private AmbientLight _ambientLight;
-        // private PointLight _pointLight;
+        private AmbientLight _ambientLight;
+        private PointLight _pointLight;
 
         private bool _modelChanged;
+        private bool _lightPosChanged;
         private Vector2 _pointerPos;
         private int _pointerButton = -1;
         private FileChooserDialog _fileChooser;
@@ -79,53 +81,54 @@ namespace lab4_5
         private enum Shading
         {
             None,
-            Flat,
-            Gouraud
+            Gouraud,
+            Phong,
+            BlinnPhong
         }
         
         public MainWindow() : this(new Builder("MainWindow.glade"))
         {
             _object = new Mesh();
-            _camera = new Camera(new Vector3(0, 0, -2), new Vector3(0, 0, 0), new Vector3(0, 1, 0), 1, (float)(45f / 180f * Math.PI), 1, 100);
-            _cameraZ.Value = -2;
+            _camera = new Camera(new Vector3(0, 0, 2), new Vector3(0, 0, 0), new Vector3(0, 1, 0), 1, (float)(45f / 180f * Math.PI), 1, 100);
+            _cameraZ.Value = 2;
             _cameraFOV.Value = 45;
             _cameraNearPlane.Value = 1;
             _cameraFarPlane.Value = 100;
-            _material = new Material(new Vector3( 1, 0.5f, 0.2f), new Vector3(0.3f, 0.3f, 0.3f), new Vector3(0.7f, 0.7f, 0.7f), new Vector3(0.7f, 0.7f, 0.7f), 1);
-            // _ambientLight = new AmbientLight(new Vector3(1, 1, 1));
-            // _pointLight = new PointLight(new Vector3(1, 1, 1), new Vector4(0, 1, 2.5f, 1), 0.05f);
+            _material = new Material(new Vector3( 1, 0.5f, 0.2f), new Vector3(0.3f, 0.3f, 0.3f), new Vector3(0.7f, 0.7f, 0.7f), new Vector3(0.7f, 0.7f, 0.7f), 10);
+            _ambientLight = new AmbientLight(new Vector3(1, 1, 1));
+            _pointLight = new PointLight(new Vector3(1, 1, 1), new Vector3(0, 1, 2.5f), 0.05f);
 
             _sidesX.Value = 30;
-            _sidesY.Value = 20;
+            _sidesY.Value = 2;
             _height.Value = 2;
             _radius.Value = 1;
 
             _models.Active = (int) Model.Cylinder;
-            _shading.Active = (int)Shading.None;
+            _shading.Active = (int) Shading.Phong;
 
-            // _p.Value = _material.P;
+            _p.Value = _material.P;
             _materialR.Value = _material.Color.X;
             _materialG.Value = _material.Color.Y;
             _materialB.Value = _material.Color.Z;
-            // _kaR.Value = _material.Ka.X;
-            // _kaG.Value = _material.Ka.Y;
-            // _kaB.Value = _material.Ka.Z;
-            // _kdR.Value = _material.Kd.X;
-            // _kdG.Value = _material.Kd.Y;
-            // _kdB.Value = _material.Kd.Z;
-            // _ksR.Value = _material.Ks.X;
-            // _ksG.Value = _material.Ks.Y;
-            // _ksB.Value = _material.Ks.Z;
-            // _ambientR.Value = _ambientLight.Intensity.X;
-            // _ambientG.Value = _ambientLight.Intensity.Y;
-            // _ambientB.Value = _ambientLight.Intensity.Z;
-            // _pointR.Value = _pointLight.Intensity.X;
-            // _pointG.Value = _pointLight.Intensity.Y;
-            // _pointB.Value = _pointLight.Intensity.Z;
-            // _lightX.Value = _pointLight.Point.X;
-            // _lightY.Value = _pointLight.Point.Y;
-            // _lightZ.Value = _pointLight.Point.Z;
-            // _attenuation.Value = _pointLight.Attenuation;
+            _kaR.Value = _material.Ka.X;
+            _kaG.Value = _material.Ka.Y;
+            _kaB.Value = _material.Ka.Z;
+            _kdR.Value = _material.Kd.X;
+            _kdG.Value = _material.Kd.Y;
+            _kdB.Value = _material.Kd.Z;
+            _ksR.Value = _material.Ks.X;
+            _ksG.Value = _material.Ks.Y;
+            _ksB.Value = _material.Ks.Z;
+            _ambientR.Value = _ambientLight.Intensity.X;
+            _ambientG.Value = _ambientLight.Intensity.Y;
+            _ambientB.Value = _ambientLight.Intensity.Z;
+            _pointR.Value = _pointLight.Intensity.X;
+            _pointG.Value = _pointLight.Intensity.Y;
+            _pointB.Value = _pointLight.Intensity.Z;
+            _lightX.Value = _pointLight.Point.X;
+            _lightY.Value = _pointLight.Point.Y;
+            _lightZ.Value = _pointLight.Point.Z;
+            _attenuation.Value = _pointLight.Attenuation;
         }
 
         private MainWindow(Builder builder) : base(builder.GetRawOwnedObject("MainWindow"))
@@ -334,32 +337,33 @@ namespace lab4_5
             
             _shading.RemoveAll();
             _shading.Append(Shading.None.ToString(), "None");
-            // _shading.Append(Shading.Flat.ToString(), "Flat");
-            // _shading.Append(Shading.Gouraud.ToString(), "Gouraud");
+            _shading.Append(Shading.Gouraud.ToString(), "Gouraud");
+            _shading.Append(Shading.Phong.ToString(), "Phong");
+            _shading.Append(Shading.BlinnPhong.ToString(), "Blinn-Phong");
 
-            // _p.ValueChanged += (_, _) => { _material.P = (float) _p.Value; };
+            _p.ValueChanged += (_, _) => { _material.P = (float) _p.Value; };
             _materialR.ValueChanged += (_, _) => { _material.Color.X = (float) _materialR.Value; };
             _materialG.ValueChanged += (_, _) => { _material.Color.Y = (float) _materialG.Value; };
             _materialB.ValueChanged += (_, _) => { _material.Color.Z = (float) _materialB.Value; };
-            // _kaR.ValueChanged += (_, _) => { _material.Ka.X = (float) _kaR.Value; };
-            // _kaG.ValueChanged += (_, _) => { _material.Ka.Y = (float) _kaG.Value; };
-            // _kaB.ValueChanged += (_, _) => { _material.Ka.Z = (float) _kaB.Value; };
-            // _kdR.ValueChanged += (_, _) => { _material.Kd.X = (float) _kdR.Value; };
-            // _kdG.ValueChanged += (_, _) => { _material.Kd.Y = (float) _kdG.Value; };
-            // _kdB.ValueChanged += (_, _) => { _material.Kd.Z = (float) _kdB.Value; };
-            // _ksR.ValueChanged += (_, _) => { _material.Ks.X = (float) _ksR.Value; };
-            // _ksG.ValueChanged += (_, _) => { _material.Ks.Y = (float) _ksG.Value; };
-            // _ksB.ValueChanged += (_, _) => { _material.Ks.Z = (float) _ksB.Value; };
-            // _ambientR.ValueChanged += (_, _) => { _ambientLight.Intensity.X = (float) _ambientR.Value; };
-            // _ambientG.ValueChanged += (_, _) => { _ambientLight.Intensity.Y = (float) _ambientG.Value; };
-            // _ambientB.ValueChanged += (_, _) => { _ambientLight.Intensity.Z = (float) _ambientB.Value; };
-            // _pointR.ValueChanged += (_, _) => { _pointLight.Intensity.X = (float) _pointR.Value; };
-            // _pointG.ValueChanged += (_, _) => { _pointLight.Intensity.Y = (float) _pointG.Value; };
-            // _pointB.ValueChanged += (_, _) => { _pointLight.Intensity.Z = (float) _pointB.Value; };
-            // _lightX.ValueChanged += (_, _) => { _pointLight.Point.X = (float) _lightX.Value; };
-            // _lightY.ValueChanged += (_, _) => { _pointLight.Point.Y = (float) _lightY.Value; };
-            // _lightZ.ValueChanged += (_, _) => { _pointLight.Point.Z = (float) _lightZ.Value; };
-            // _attenuation.ValueChanged += (_, _) => { _pointLight.Attenuation = (float) _attenuation.Value; };
+            _kaR.ValueChanged += (_, _) => { _material.Ka.X = (float) _kaR.Value; };
+            _kaG.ValueChanged += (_, _) => { _material.Ka.Y = (float) _kaG.Value; };
+            _kaB.ValueChanged += (_, _) => { _material.Ka.Z = (float) _kaB.Value; };
+            _kdR.ValueChanged += (_, _) => { _material.Kd.X = (float) _kdR.Value; };
+            _kdG.ValueChanged += (_, _) => { _material.Kd.Y = (float) _kdG.Value; };
+            _kdB.ValueChanged += (_, _) => { _material.Kd.Z = (float) _kdB.Value; };
+            _ksR.ValueChanged += (_, _) => { _material.Ks.X = (float) _ksR.Value; };
+            _ksG.ValueChanged += (_, _) => { _material.Ks.Y = (float) _ksG.Value; };
+            _ksB.ValueChanged += (_, _) => { _material.Ks.Z = (float) _ksB.Value; };
+            _ambientR.ValueChanged += (_, _) => { _ambientLight.Intensity.X = (float) _ambientR.Value; };
+            _ambientG.ValueChanged += (_, _) => { _ambientLight.Intensity.Y = (float) _ambientG.Value; };
+            _ambientB.ValueChanged += (_, _) => { _ambientLight.Intensity.Z = (float) _ambientB.Value; };
+            _pointR.ValueChanged += (_, _) => { _pointLight.Intensity.X = (float) _pointR.Value; };
+            _pointG.ValueChanged += (_, _) => { _pointLight.Intensity.Y = (float) _pointG.Value; };
+            _pointB.ValueChanged += (_, _) => { _pointLight.Intensity.Z = (float) _pointB.Value; };
+            _lightX.ValueChanged += (_, _) => { _pointLight.Point.X = (float) _lightX.Value; _lightPosChanged = true; };
+            _lightY.ValueChanged += (_, _) => { _pointLight.Point.Y = (float) _lightY.Value; _lightPosChanged = true; };
+            _lightZ.ValueChanged += (_, _) => { _pointLight.Point.Z = (float) _lightZ.Value; _lightPosChanged = true; };
+            _attenuation.ValueChanged += (_, _) => { _pointLight.Attenuation = (float) _attenuation.Value; };
         }
 
         private void GLInit(object sender, EventArgs args)
@@ -372,35 +376,6 @@ namespace lab4_5
             frame_clock.Update += (_, _) => glArea.QueueRender();
             frame_clock.BeginUpdating();
 
-            var vertices = Array.Empty<float>();
-            var elements = Array.Empty<ushort>();
-
-            uint[] buffers = new uint[2];
-            uint[] arrays = new uint[1];
-            gl.GenBuffers(2, buffers);
-            uint vbo = buffers[0], vio = buffers[1];
-            gl.GenVertexArrays(1, arrays);
-            uint vao = arrays[0];
-            gl.BindVertexArray(vao);
-            gl.BindBuffer(OpenGL.GL_ARRAY_BUFFER, vbo);
-            gl.BindBuffer(OpenGL.GL_ELEMENT_ARRAY_BUFFER, vio);
-            gl.VertexAttribPointer(0, 3, OpenGL.GL_FLOAT, true, 0, IntPtr.Zero);
-            gl.EnableVertexAttribArray(0);
-            gl.BindVertexArray(0);
-
-            uint vertexShader = gl.CreateShader(OpenGL.GL_VERTEX_SHADER);
-            gl.ShaderSource(vertexShader, ReadFromRes("lab4_5.shader.vert"));
-            gl.CompileShader(vertexShader);
-            uint fragmentShader = gl.CreateShader(OpenGL.GL_FRAGMENT_SHADER);
-            gl.ShaderSource(fragmentShader, ReadFromRes("lab4_5.shader.frag"));
-            gl.CompileShader(fragmentShader);
-            uint shaderProgram = gl.CreateProgram();
-            gl.AttachShader(shaderProgram, vertexShader);
-            gl.AttachShader(shaderProgram, fragmentShader);
-            gl.LinkProgram(shaderProgram);
-            gl.DeleteShader(vertexShader);
-            gl.DeleteShader(fragmentShader);
-            
             gl.FrontFace(OpenGL.GL_CCW);
             
             gl.Enable(OpenGL.GL_DEPTH_TEST);
@@ -415,49 +390,156 @@ namespace lab4_5
             gl.Enable(OpenGL.GL_LINE_SMOOTH);
             gl.Hint(OpenGL.GL_LINE_SMOOTH_HINT, OpenGL.GL_NICEST);
             
-            gl.ClearColor(BACKGROUND_COLOR.X, BACKGROUND_COLOR.Y, BACKGROUND_COLOR.Z, 1.0f);
+            var vertices = Array.Empty<float>();
+            var elements = Array.Empty<uint>();
+
+            uint[] buffers = new uint[3];
+            uint[] arrays = new uint[2];
+            gl.GenBuffers(3, buffers);
+            uint vbo = buffers[0], vio = buffers[1];
+            gl.GenVertexArrays(2, arrays);
+            uint vao = arrays[0];
+            gl.BindVertexArray(vao);
+            gl.BindBuffer(OpenGL.GL_ARRAY_BUFFER, vbo);
+            gl.BindBuffer(OpenGL.GL_ELEMENT_ARRAY_BUFFER, vio);
+            gl.VertexAttribPointer(0, 3, OpenGL.GL_FLOAT, true, 6 * sizeof(float), IntPtr.Zero);
+            gl.VertexAttribPointer(1, 3, OpenGL.GL_FLOAT, false, 6 * sizeof(float), (IntPtr)(3 * sizeof(float)));
+            gl.EnableVertexAttribArray(0);
+            gl.EnableVertexAttribArray(1);
+            gl.BindVertexArray(0);
+
+            uint lightVao = arrays[1];
+            uint lightVbo = buffers[2];
+            gl.BindVertexArray(lightVao);
+            gl.BindBuffer(OpenGL.GL_ARRAY_BUFFER, lightVbo);
+            gl.VertexAttribPointer(0, 3, OpenGL.GL_FLOAT, true, 0, IntPtr.Zero);
+            gl.EnableVertexAttribArray(0);
+            gl.BindVertexArray(0);
+            
+            Shader baseShader = new Shader(gl, "lab4_5.base.vert", "lab4_5.base.frag");
+            Shader normalsShader = new Shader(gl, "lab4_5.base.vert", "lab4_5.base.frag", "lab4_5.normals.glsl");
+            Shader phongShader = new Shader(gl, "lab4_5.base.vert", "lab4_5.phong.frag");
+            Shader gouraudShader = new Shader(gl, "lab4_5.gouraud.vert", "lab4_5.gouraud.frag");
+
+            gl.ClearColor(BACKGROUND_COLOR.X, BACKGROUND_COLOR.Y, BACKGROUND_COLOR.Z, 1);
 
             glArea.Render += (_, _) =>
             {
                 gl.Clear(OpenGL.GL_COLOR_BUFFER_BIT | OpenGL.GL_DEPTH_BUFFER_BIT);
-                gl.UseProgram(shaderProgram);
 
                 var projMatrix = _camera.GetProjectionMatrix();
-                int projLoc = gl.GetUniformLocation(shaderProgram, "proj");
-                gl.UniformMatrix4(projLoc, 1, false, projMatrix.ToArray());
                 var viewMatrix = _camera.GetViewMatrix();
                 // autoscale
                 viewMatrix = Matrix4x4.CreateScale(Math.Min(_camera.AspectRatio, 1), Math.Min(_camera.AspectRatio, 1), 1) * viewMatrix;
-                int viewLoc = gl.GetUniformLocation(shaderProgram, "view");
-                gl.UniformMatrix4(viewLoc, 1, false, viewMatrix.ToArray());
                 var modelMatrix = _object.GetModelMatrix();
-                int modelLoc = gl.GetUniformLocation(shaderProgram, "model");
-                gl.UniformMatrix4(modelLoc, 1, false, modelMatrix.ToArray());
-                int colorLoc = gl.GetUniformLocation(shaderProgram, "inColor");
-
-                gl.BindVertexArray(vao);
                 
+                gl.UseProgram(baseShader.Id);
+                baseShader.SetMatrix4(gl, "model", modelMatrix);
+                baseShader.SetMatrix4(gl, "view", viewMatrix);
+                baseShader.SetMatrix4(gl, "proj", projMatrix);
+
                 if (_modelChanged)
                 {
                     _modelChanged = false;
-                    _object.ToArray(true, false, false, out vertices, out elements);
+                    gl.BindVertexArray(vao);
+                    gl.BindBuffer(OpenGL.GL_ARRAY_BUFFER, vao);
+                    _object.ToArray(true, false, true, out vertices, out elements);
                     gl.BufferData(OpenGL.GL_ARRAY_BUFFER, vertices, OpenGL.GL_DYNAMIC_DRAW);
                     gl.BufferData(OpenGL.GL_ELEMENT_ARRAY_BUFFER, elements, OpenGL.GL_DYNAMIC_DRAW);
+                    gl.BindBuffer(OpenGL.GL_ARRAY_BUFFER, 0);
+                    gl.BindVertexArray(0);
+                }
+
+                if (_lightPosChanged)
+                {
+                    _lightPosChanged = false;
+                    gl.BindBuffer(OpenGL.GL_ARRAY_BUFFER, lightVbo);
+                    gl.BufferData(OpenGL.GL_ARRAY_BUFFER, _pointLight.Point.ToArray(), OpenGL.GL_DYNAMIC_DRAW);
+                    gl.BindBuffer(OpenGL.GL_ARRAY_BUFFER, 0);
                 }
                 
-                gl.Uniform4(colorLoc, _material.Color.X, _material.Color.Y, _material.Color.Z, 1);
-                gl.PolygonMode(OpenGL.GL_FRONT_AND_BACK, OpenGL.GL_FILL);
-                gl.DrawElements(OpenGL.GL_TRIANGLES, elements.Length, OpenGL.GL_UNSIGNED_SHORT, IntPtr.Zero);
+                gl.BindVertexArray(vao);
+
+                if (_fillPolygons.Active)
+                {
+                    if (_shading.Active == (int) Shading.None)
+                    {
+                        gl.UseProgram(baseShader.Id);
+                        baseShader.SetVec3(gl, "color", _material.Color);
+                    }   
+                    else if (_shading.Active == (int) Shading.Gouraud)
+                    {
+                        gl.UseProgram(gouraudShader.Id);
+                        gouraudShader.SetMatrix4(gl, "model", modelMatrix);
+                        gouraudShader.SetMatrix4(gl, "view", viewMatrix);
+                        gouraudShader.SetMatrix4(gl, "proj", projMatrix);
+                        gouraudShader.SetVec3(gl, "material.color", _material.Color);
+                        gouraudShader.SetVec3(gl, "material.Ka", _material.Ka);
+                        gouraudShader.SetVec3(gl, "material.Kd", _material.Kd);
+                        gouraudShader.SetVec3(gl, "material.Ks", _material.Ks);
+                        gouraudShader.SetFloat(gl, "material.p", _material.P);
+                        gouraudShader.SetVec3(gl, "ambientIntensity", _ambientLight.Intensity);
+                        gouraudShader.SetVec3(gl, "light.intensity", _pointLight.Intensity);
+                        var lightPos = Vector3.Transform(_pointLight.Point, Matrix4x4.Transpose(viewMatrix));
+                        gouraudShader.SetVec3(gl, "light.pos", lightPos);
+                        gouraudShader.SetFloat(gl, "light.attenuation", _pointLight.Attenuation);
+                    }
+                    else if (_shading.Active == (int) Shading.Phong || _shading.Active == (int) Shading.BlinnPhong)
+                    {
+                        gl.UseProgram(phongShader.Id);
+                        phongShader.SetMatrix4(gl, "model", modelMatrix);
+                        phongShader.SetMatrix4(gl, "view", viewMatrix);
+                        phongShader.SetMatrix4(gl, "proj", projMatrix);
+                        phongShader.SetVec3(gl, "material.color", _material.Color);
+                        phongShader.SetVec3(gl, "material.Ka", _material.Ka);
+                        phongShader.SetVec3(gl, "material.Kd", _material.Kd);
+                        phongShader.SetVec3(gl, "material.Ks", _material.Ks);
+                        phongShader.SetFloat(gl, "material.p", _material.P);
+                        phongShader.SetVec3(gl, "ambientIntensity", _ambientLight.Intensity);
+                        phongShader.SetVec3(gl, "light.intensity", _pointLight.Intensity);
+                        var lightPos = Vector3.Transform(_pointLight.Point, Matrix4x4.Transpose(viewMatrix));
+                        phongShader.SetVec3(gl, "light.pos", lightPos);
+                        phongShader.SetFloat(gl, "light.attenuation", _pointLight.Attenuation);
+                        if (_shading.Active == (int) Shading.BlinnPhong)
+                            phongShader.SetInt(gl, "blinn", 1);
+                        else
+                            phongShader.SetInt(gl, "blinn", 0);
+                    }
+                    gl.PolygonMode(OpenGL.GL_FRONT_AND_BACK, OpenGL.GL_FILL);
+                    gl.DrawElements(OpenGL.GL_TRIANGLES, elements.Length, OpenGL.GL_UNSIGNED_INT, IntPtr.Zero);
+                }
 
                 if (_wireframe.Active)
                 {
-                    gl.Uniform4(colorLoc, LINE_COLOR.X, LINE_COLOR.Y, LINE_COLOR.Z, 1);
+                    gl.UseProgram(baseShader.Id);
+                    baseShader.SetVec3(gl, "color", LINE_COLOR);
                     gl.LineWidth(2);
                     gl.PolygonMode(OpenGL.GL_FRONT_AND_BACK, OpenGL.GL_LINE);
-                    gl.DrawElements(OpenGL.GL_TRIANGLES, elements.Length, OpenGL.GL_UNSIGNED_SHORT, IntPtr.Zero);
+                    gl.DrawElements(OpenGL.GL_TRIANGLES, elements.Length, OpenGL.GL_UNSIGNED_INT, IntPtr.Zero);
                 }
                 
+                if (_showNormals.Active)
+                {
+                    gl.UseProgram(normalsShader.Id);
+                    normalsShader.SetMatrix4(gl, "model", modelMatrix);
+                    normalsShader.SetMatrix4(gl, "view", viewMatrix);
+                    normalsShader.SetMatrix4(gl, "proj", projMatrix);
+                    normalsShader.SetVec3(gl, "color", NORMAL_COLOR);
+                    gl.DrawElements(OpenGL.GL_TRIANGLES, elements.Length, OpenGL.GL_UNSIGNED_INT, IntPtr.Zero);
+                }
+
+                if (_showPointLight.Active)
+                {
+                    gl.BindVertexArray(lightVao);
+                    gl.UseProgram(baseShader.Id);
+                    baseShader.SetMatrix4(gl, "model", Matrix4x4.Identity);
+                    baseShader.SetVec3(gl, "color", Vector3.One);
+                    gl.PointSize(10);
+                    gl.DrawArrays(OpenGL.GL_POINTS, 0, 1);
+                }
+
                 gl.BindVertexArray(0);
+                gl.UseProgram(0);
             };
             
             glArea.Unrealized += (_, _) => {
@@ -496,10 +578,16 @@ namespace lab4_5
                 _cameraTargetZ.Value = _camera.Target.Z;
             }
             // Middle button - translate light point
-            // else if (_pointerButton == 2)
-            // {
-            //     
-            // }
+            else if (_pointerButton == 2)
+            {
+                var right = _camera.GetRightVector();
+                _pointLight.Point += _camera.Up * -0.02f * (float) (args.Event.Y - _pointerPos.Y) + 
+                                     right * 0.02f * (float) (args.Event.X - _pointerPos.X);
+                
+                _lightX.Value = _pointLight.Point.X;
+                _lightY.Value = _pointLight.Point.Y;
+                _lightZ.Value = _pointLight.Point.Z;
+            }
             
             _pointerPos.X = (float)args.Event.X;
             _pointerPos.Y = (float)args.Event.Y;

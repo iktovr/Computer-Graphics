@@ -33,9 +33,10 @@
     <property name="page-increment">10</property>
   </object>
   <object class="GtkAdjustment" id="_cameraNearPlane">
+    <property name="lower">0.10</property>
     <property name="upper">100</property>
-    <property name="step-increment">1</property>
-    <property name="page-increment">10</property>
+    <property name="step-increment">0.10</property>
+    <property name="page-increment">1</property>
   </object>
   <object class="GtkAdjustment" id="_cameraTargetX">
     <property name="lower">-100</property>
@@ -684,6 +685,7 @@
                         <property name="visible">True</property>
                         <property name="can-focus">True</property>
                         <property name="adjustment">_cameraNearPlane</property>
+                        <property name="digits">1</property>
                       </object>
                       <packing>
                         <property name="left-attach">1</property>
@@ -791,9 +793,6 @@
                     <child>
                       <placeholder/>
                     </child>
-                    <child>
-                      <placeholder/>
-                    </child>
                   </object>
                 </child>
                 <child type="label">
@@ -842,6 +841,21 @@
                         <property name="orientation">vertical</property>
                         <property name="spacing">2</property>
                         <child>
+                          <object class="GtkCheckButton" id="_fillPolygons">
+                            <property name="label" translatable="yes">Fill polygons</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">True</property>
+                            <property name="receives-default">False</property>
+                            <property name="active">True</property>
+                            <property name="draw-indicator">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
+                        </child>
+                        <child>
                           <object class="GtkCheckButton" id="_wireframe">
                             <property name="label" translatable="yes">Wireframe</property>
                             <property name="visible">True</property>
@@ -852,7 +866,7 @@
                           <packing>
                             <property name="expand">False</property>
                             <property name="fill">True</property>
-                            <property name="position">0</property>
+                            <property name="position">1</property>
                           </packing>
                         </child>
                         <child>
@@ -866,7 +880,21 @@
                           <packing>
                             <property name="expand">False</property>
                             <property name="fill">True</property>
-                            <property name="position">1</property>
+                            <property name="position">2</property>
+                          </packing>
+                        </child>
+                        <child>
+                          <object class="GtkCheckButton" id="_showPointLight">
+                            <property name="label" translatable="yes">Show point light</property>
+                            <property name="visible">True</property>
+                            <property name="can-focus">True</property>
+                            <property name="receives-default">False</property>
+                            <property name="draw-indicator">True</property>
+                          </object>
+                          <packing>
+                            <property name="expand">False</property>
+                            <property name="fill">True</property>
+                            <property name="position">3</property>
                           </packing>
                         </child>
                       </object>
@@ -1387,7 +1415,7 @@
                 <property name="can-focus">True</property>
                 <property name="spacing">5</property>
                 <child>
-                  <!-- n-columns=4 n-rows=4 -->
+                  <!-- n-columns=4 n-rows=3 -->
                   <object class="GtkGrid">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
@@ -1511,20 +1539,6 @@
                         <property name="top-attach">1</property>
                       </packing>
                     </child>
-                    <child>
-                      <object class="GtkCheckButton" id="_showPointLight">
-                        <property name="label" translatable="yes">Show point light</property>
-                        <property name="visible">True</property>
-                        <property name="can-focus">True</property>
-                        <property name="receives-default">False</property>
-                        <property name="draw-indicator">True</property>
-                      </object>
-                      <packing>
-                        <property name="left-attach">0</property>
-                        <property name="top-attach">3</property>
-                        <property name="width">4</property>
-                      </packing>
-                    </child>
                   </object>
                 </child>
                 <child type="label">
@@ -1553,6 +1567,8 @@
             <property name="visible">True</property>
             <property name="app-paintable">True</property>
             <property name="can-focus">False</property>
+            <property name="has-depth-buffer">True</property>
+            <property name="has-stencil-buffer">True</property>
           </object>
           <packing>
             <property name="expand">True</property>

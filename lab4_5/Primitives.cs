@@ -1,16 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Numerics;
 using System.Globalization;
 using System.Linq;
+using SharpGL;
+using static Extensions.Extensions;
 
 namespace Primitives
 {
     public class Vertex
     {
         public Vector4 Point;
-        public ushort Id;
+        public uint Id;
 
         public List<Polygon> Polygons;
         public Vector4 Normal;
@@ -128,7 +131,7 @@ namespace Primitives
             return translation * rotation * scale;
         }
 
-        public void ToArray(bool coords, bool colors, bool normals, out float[] vertices, out ushort[] elements)
+        public void ToArray(bool coords, bool colors, bool normals, out float[] vertices, out uint[] elements)
         {
             int multiplier = Convert.ToInt32(coords) + Convert.ToInt32(colors) + Convert.ToInt32(normals);
             vertices = new float[Vertices.Count * 3 * multiplier];
@@ -159,7 +162,7 @@ namespace Primitives
             }
 
             int elementsCount = Polygons.Sum(a => a.Vertices.Length);
-            elements = new ushort[elementsCount];
+            elements = new uint[elementsCount];
             i = 0;
             foreach (Polygon polygon in Polygons)
             {
@@ -271,15 +274,80 @@ namespace Primitives
 
     public class PointLight
     {
-        public Vector4 Point;
+        public Vector3 Point;
         public Vector3 Intensity;
         public float Attenuation;
 
-        public PointLight(Vector3 intensity, Vector4 point, float attenuation)
+        public PointLight(Vector3 intensity, Vector3 point, float attenuation)
         {
             Intensity = intensity;
             Point = point;
             Attenuation = attenuation;
+        }
+    }
+
+    public class Shader
+    {
+        public readonly uint Id;
+
+        public Shader(OpenGL gl, string vert, string frag, string geom = null)
+        {
+            var tmp = new int[1];
+            Id = gl.CreateProgram();
+            uint vertId = gl.CreateShader(OpenGL.GL_VERTEX_SHADER);
+            gl.ShaderSource(vertId, ReadFromRes(vert));
+            gl.CompileShader(vertId);
+            gl.GetShader(vertId, OpenGL.GL_COMPILE_STATUS, tmp);
+            Debug.Assert(tmp[0] == OpenGL.GL_TRUE, "Shader compilation failed");
+            gl.AttachShader(Id, vertId);
+            // gl.DeleteShader(vertId);
+
+            if (geom != null)
+            {
+                uint geomId = gl.CreateShader(OpenGL.GL_GEOMETRY_SHADER);
+                gl.ShaderSource(geomId, ReadFromRes(geom));
+                gl.CompileShader(geomId);
+                gl.GetShader(geomId, OpenGL.GL_COMPILE_STATUS, tmp);
+                Debug.Assert(tmp[0] == OpenGL.GL_TRUE, "Shader compilation failed");
+                gl.AttachShader(Id, geomId);
+                // gl.DeleteShader(geomId);
+            }
+            
+            uint fragId = gl.CreateShader(OpenGL.GL_FRAGMENT_SHADER);
+            gl.ShaderSource(fragId, ReadFromRes(frag));
+            gl.CompileShader(fragId);
+            gl.GetShader(fragId, OpenGL.GL_COMPILE_STATUS, tmp);
+            Debug.Assert(tmp[0] == OpenGL.GL_TRUE, "Shader compilation failed");
+            gl.AttachShader(Id, fragId);
+            // gl.DeleteShader(fragId);
+            
+            gl.LinkProgram(Id);
+            gl.GetProgram(Id, OpenGL.GL_LINK_STATUS, tmp);
+            Debug.Assert(tmp[0] == OpenGL.GL_TRUE, "Shader program link failed");
+        }
+
+        public void SetMatrix4(OpenGL gl, string name, Matrix4x4 matrix)
+        {
+            int location = gl.GetUniformLocation(Id, name);
+            gl.UniformMatrix4(location , 1, false, matrix.ToArray());
+        }
+        
+        public void SetVec3(OpenGL gl, string name, Vector3 vec)
+        {
+            int location = gl.GetUniformLocation(Id, name);
+            gl.Uniform3(location, vec.X, vec.Y, vec.Z);
+        }
+
+        public void SetFloat(OpenGL gl, string name, float value)
+        {
+            int location = gl.GetUniformLocation(Id, name);
+            gl.Uniform1(location, value);
+        }
+        
+        public void SetInt(OpenGL gl, string name, int value)
+        {
+            int location = gl.GetUniformLocation(Id, name);
+            gl.Uniform1(location, value);
         }
     }
 
