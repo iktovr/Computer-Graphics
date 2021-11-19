@@ -1,7 +1,7 @@
 using System;
 using Gtk;
 
-namespace lab4_5
+namespace lab4_5_6
 {
     class Program
     {

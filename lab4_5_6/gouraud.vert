@@ -1,7 +1,6 @@
 #version 330 core
 
 struct Material {
-    vec3 color;
     vec3 Ka;
     vec3 Kd;
     vec3 Ks;
@@ -15,10 +14,11 @@ struct Light {
 };
 
 layout (location = 0) in vec3 position;
-layout (location = 1) in vec3 inNormal;
+layout (location = 1) in vec3 inColor;
+layout (location = 2) in vec3 inNormal;
 
 out vec3 normal;
-out vec4 color;
+out vec3 color;
 
 uniform mat4 proj;
 uniform mat4 view;
@@ -27,6 +27,9 @@ uniform mat4 model;
 uniform Material material;
 uniform Light light;
 uniform vec3 ambientIntensity;
+
+uniform bool animate;
+uniform uint curTime;
 
 void main()
 {
@@ -53,5 +56,10 @@ void main()
     float distToLight = length(light.pos - vertCoord);
     float attenuation = (1 + light.attenuation * distToLight * distToLight);
     
-    color = vec4(material.color * (ambient + (diffuse + specular) / attenuation), 1);
+    if (animate) {
+        color = sin(inColor + curTime / 3000000.0) / 2 + 0.5;
+    } else {
+        color = inColor;
+    }
+    color = color * (ambient + (diffuse + specular) / attenuation);
 }

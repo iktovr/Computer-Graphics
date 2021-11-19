@@ -147,9 +147,9 @@ namespace Primitives
                 }
                 if (colors)
                 {
-                    vertices[i] = 0;
-                    vertices[i+1] = 0;
-                    vertices[i+2] = 0;
+                    vertices[i] = vertex.Polygons[0].Material.Color.X;
+                    vertices[i+1] = vertex.Polygons[0].Material.Color.Y;
+                    vertices[i+2] = vertex.Polygons[0].Material.Color.Z;
                     i += 3;
                 }
                 if (normals)
@@ -298,7 +298,7 @@ namespace Primitives
             gl.ShaderSource(vertId, ReadFromRes(vert));
             gl.CompileShader(vertId);
             gl.GetShader(vertId, OpenGL.GL_COMPILE_STATUS, tmp);
-            Debug.Assert(tmp[0] == OpenGL.GL_TRUE, "Shader compilation failed");
+            Debug.Assert(tmp[0] == OpenGL.GL_TRUE, "Vertex shader compilation failed");
             gl.AttachShader(Id, vertId);
             // gl.DeleteShader(vertId);
 
@@ -308,7 +308,7 @@ namespace Primitives
                 gl.ShaderSource(geomId, ReadFromRes(geom));
                 gl.CompileShader(geomId);
                 gl.GetShader(geomId, OpenGL.GL_COMPILE_STATUS, tmp);
-                Debug.Assert(tmp[0] == OpenGL.GL_TRUE, "Shader compilation failed");
+                Debug.Assert(tmp[0] == OpenGL.GL_TRUE, "Geometrical Ssader compilation failed");
                 gl.AttachShader(Id, geomId);
                 // gl.DeleteShader(geomId);
             }
@@ -317,11 +317,11 @@ namespace Primitives
             gl.ShaderSource(fragId, ReadFromRes(frag));
             gl.CompileShader(fragId);
             gl.GetShader(fragId, OpenGL.GL_COMPILE_STATUS, tmp);
-            Debug.Assert(tmp[0] == OpenGL.GL_TRUE, "Shader compilation failed");
+            Debug.Assert(tmp[0] == OpenGL.GL_TRUE, "Fragment shader compilation failed");
             gl.AttachShader(Id, fragId);
             // gl.DeleteShader(fragId);
-            
             gl.LinkProgram(Id);
+            
             gl.GetProgram(Id, OpenGL.GL_LINK_STATUS, tmp);
             Debug.Assert(tmp[0] == OpenGL.GL_TRUE, "Shader program link failed");
         }
@@ -345,6 +345,12 @@ namespace Primitives
         }
         
         public void SetInt(OpenGL gl, string name, int value)
+        {
+            int location = gl.GetUniformLocation(Id, name);
+            gl.Uniform1(location, value);
+        }
+        
+        public void SetUint(OpenGL gl, string name, uint value)
         {
             int location = gl.GetUniformLocation(Id, name);
             gl.Uniform1(location, value);

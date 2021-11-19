@@ -1,7 +1,6 @@
 #version 330 core
 
 struct Material {
-    vec3 color;
     vec3 Ka;
     vec3 Kd;
     vec3 Ks;
@@ -16,6 +15,7 @@ struct Light {
 
 in vec3 normal;
 in vec3 fragCoord;
+in vec3 color;
 out vec4 fragColor;
 
 uniform Material material;
@@ -47,5 +47,5 @@ void main() {
     float distToLight = length(light.pos - fragCoord);
     float attenuation = (1 + light.attenuation * distToLight * distToLight);
     
-    fragColor = vec4(material.color * (ambient + (diffuse + specular) / attenuation), 1);
+    fragColor = vec4(color * (ambient + (diffuse + specular) / attenuation), 1);
 }

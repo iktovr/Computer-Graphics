@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lab4_5", "lab4_5.csproj", "{5E3D5A5B-A6B3-4BBB-988A-970E44B03E00}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lab4_5_6", "lab4_5_6.csproj", "{5E3D5A5B-A6B3-4BBB-988A-970E44B03E00}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CGPlatform", "CGPlatform\CGPlatform.csproj", "{E7509558-A41C-4ACD-8475-531FEC17AC52}"
 EndProject

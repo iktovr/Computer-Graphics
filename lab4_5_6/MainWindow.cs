@@ -1,5 +1,7 @@
 using System;
+using System.Diagnostics;
 using System.Numerics;
+using System.Text;
 using Gtk;
 using Gdk;
 using SharpGL;
@@ -7,9 +9,10 @@ using UI = Gtk.Builder.ObjectAttribute;
 
 using static Extensions.Extensions;
 using Primitives;
+using Action = Gtk.Action;
 using Window = Gtk.Window;
 
-namespace lab4_5
+namespace lab4_5_6
 {
     class MainWindow : Window
     {
@@ -37,6 +40,7 @@ namespace lab4_5
         [UI] private CheckButton _wireframe = null;
         [UI] private CheckButton _showNormals = null;
         [UI] private CheckButton _fillPolygons = null;
+        [UI] private CheckButton _animation = null;
         [UI] private ComboBoxText _models = null;
         [UI] private ComboBoxText _shading = null;
         [UI] private Adjustment _sidesX = null;
@@ -62,6 +66,7 @@ namespace lab4_5
 
         private bool _modelChanged;
         private bool _lightPosChanged;
+        private uint _startTime;
         private Vector2 _pointerPos;
         private int _pointerButton = -1;
         private FileChooserDialog _fileChooser;
@@ -251,7 +256,7 @@ namespace lab4_5
                 _camera.Up = Vector3.Normalize(Vector3.Transform(_camera.Up,
                     Matrix4x4.CreateFromAxisAngle(_camera.Position - _camera.Target, (float) -Math.PI / 180)));
             };
-            
+
             _xAngle.ValueChanged += (_, _) => { _object.Rotation.X = (float) (_xAngle.Value / 180 * Math.PI); };
             _yAngle.ValueChanged += (_, _) => { _object.Rotation.Y = (float) (_yAngle.Value / 180 * Math.PI); };
             _zAngle.ValueChanged += (_, _) => { _object.Rotation.Z = (float) (_zAngle.Value / 180 * Math.PI); };
@@ -342,9 +347,9 @@ namespace lab4_5
             _shading.Append(Shading.BlinnPhong.ToString(), "Blinn-Phong");
 
             _p.ValueChanged += (_, _) => { _material.P = (float) _p.Value; };
-            _materialR.ValueChanged += (_, _) => { _material.Color.X = (float) _materialR.Value; };
-            _materialG.ValueChanged += (_, _) => { _material.Color.Y = (float) _materialG.Value; };
-            _materialB.ValueChanged += (_, _) => { _material.Color.Z = (float) _materialB.Value; };
+            _materialR.ValueChanged += (_, _) => { _material.Color.X = (float) _materialR.Value; _modelChanged = true; };
+            _materialG.ValueChanged += (_, _) => { _material.Color.Y = (float) _materialG.Value; _modelChanged = true; };
+            _materialB.ValueChanged += (_, _) => { _material.Color.Z = (float) _materialB.Value; _modelChanged = true; };
             _kaR.ValueChanged += (_, _) => { _material.Ka.X = (float) _kaR.Value; };
             _kaG.ValueChanged += (_, _) => { _material.Ka.Y = (float) _kaG.Value; };
             _kaB.ValueChanged += (_, _) => { _material.Ka.Z = (float) _kaB.Value; };
@@ -402,10 +407,12 @@ namespace lab4_5
             gl.BindVertexArray(vao);
             gl.BindBuffer(OpenGL.GL_ARRAY_BUFFER, vbo);
             gl.BindBuffer(OpenGL.GL_ELEMENT_ARRAY_BUFFER, vio);
-            gl.VertexAttribPointer(0, 3, OpenGL.GL_FLOAT, true, 6 * sizeof(float), IntPtr.Zero);
-            gl.VertexAttribPointer(1, 3, OpenGL.GL_FLOAT, false, 6 * sizeof(float), (IntPtr)(3 * sizeof(float)));
+            gl.VertexAttribPointer(0, 3, OpenGL.GL_FLOAT, true, 9 * sizeof(float), IntPtr.Zero);
+            gl.VertexAttribPointer(1, 3, OpenGL.GL_FLOAT, false, 9 * sizeof(float), (IntPtr)(3 * sizeof(float)));
+            gl.VertexAttribPointer(2, 3, OpenGL.GL_FLOAT, false, 9 * sizeof(float), (IntPtr)(6 * sizeof(float)));
             gl.EnableVertexAttribArray(0);
             gl.EnableVertexAttribArray(1);
+            gl.EnableVertexAttribArray(2);
             gl.BindVertexArray(0);
 
             uint lightVao = arrays[1];
@@ -416,10 +423,10 @@ namespace lab4_5
             gl.EnableVertexAttribArray(0);
             gl.BindVertexArray(0);
             
-            Shader baseShader = new Shader(gl, "lab4_5.base.vert", "lab4_5.base.frag");
-            Shader normalsShader = new Shader(gl, "lab4_5.base.vert", "lab4_5.base.frag", "lab4_5.normals.glsl");
-            Shader phongShader = new Shader(gl, "lab4_5.base.vert", "lab4_5.phong.frag");
-            Shader gouraudShader = new Shader(gl, "lab4_5.gouraud.vert", "lab4_5.gouraud.frag");
+            Shader baseShader = new Shader(gl, "lab4_5_6.base.vert", "lab4_5_6.base.frag");
+            Shader normalsShader = new Shader(gl, "lab4_5_6.base.vert", "lab4_5_6.base.frag", "lab4_5_6.normals.glsl");
+            Shader phongShader = new Shader(gl, "lab4_5_6.base.vert", "lab4_5_6.phong.frag");
+            Shader gouraudShader = new Shader(gl, "lab4_5_6.gouraud.vert", "lab4_5_6.base.frag");
 
             gl.ClearColor(BACKGROUND_COLOR.X, BACKGROUND_COLOR.Y, BACKGROUND_COLOR.Z, 1);
 
@@ -437,13 +444,22 @@ namespace lab4_5
                 baseShader.SetMatrix4(gl, "model", modelMatrix);
                 baseShader.SetMatrix4(gl, "view", viewMatrix);
                 baseShader.SetMatrix4(gl, "proj", projMatrix);
+                baseShader.SetInt(gl, "useSingleColor", 0);
+                baseShader.SetInt(gl, "animate", 0);
+                gl.UseProgram(phongShader.Id);
+                phongShader.SetInt(gl, "animate", 0);
 
+                if (!_animation.Active)
+                {
+                    _startTime = (uint) frame_clock.FrameTime;
+                }
+                
                 if (_modelChanged)
                 {
                     _modelChanged = false;
                     gl.BindVertexArray(vao);
                     gl.BindBuffer(OpenGL.GL_ARRAY_BUFFER, vao);
-                    _object.ToArray(true, false, true, out vertices, out elements);
+                    _object.ToArray(true, true, true, out vertices, out elements);
                     gl.BufferData(OpenGL.GL_ARRAY_BUFFER, vertices, OpenGL.GL_DYNAMIC_DRAW);
                     gl.BufferData(OpenGL.GL_ELEMENT_ARRAY_BUFFER, elements, OpenGL.GL_DYNAMIC_DRAW);
                     gl.BindBuffer(OpenGL.GL_ARRAY_BUFFER, 0);
@@ -465,15 +481,24 @@ namespace lab4_5
                     if (_shading.Active == (int) Shading.None)
                     {
                         gl.UseProgram(baseShader.Id);
-                        baseShader.SetVec3(gl, "color", _material.Color);
-                    }   
+                        if (_animation.Active)
+                        {
+                            baseShader.SetInt(gl, "animate", 1);
+                            baseShader.SetUint(gl, "curTime", _startTime - (uint)frame_clock.FrameTime);
+                        }
+                    }
                     else if (_shading.Active == (int) Shading.Gouraud)
                     {
                         gl.UseProgram(gouraudShader.Id);
+                        if (_animation.Active)
+                        {
+                            gouraudShader.SetInt(gl, "animate", 1);
+                            gouraudShader.SetUint(gl, "curTime", _startTime - (uint)frame_clock.FrameTime);
+                        }
+                        gouraudShader.SetInt(gl, "useSingleColor", 0);
                         gouraudShader.SetMatrix4(gl, "model", modelMatrix);
                         gouraudShader.SetMatrix4(gl, "view", viewMatrix);
                         gouraudShader.SetMatrix4(gl, "proj", projMatrix);
-                        gouraudShader.SetVec3(gl, "material.color", _material.Color);
                         gouraudShader.SetVec3(gl, "material.Ka", _material.Ka);
                         gouraudShader.SetVec3(gl, "material.Kd", _material.Kd);
                         gouraudShader.SetVec3(gl, "material.Ks", _material.Ks);
@@ -487,10 +512,14 @@ namespace lab4_5
                     else if (_shading.Active == (int) Shading.Phong || _shading.Active == (int) Shading.BlinnPhong)
                     {
                         gl.UseProgram(phongShader.Id);
+                        if (_animation.Active)
+                        {
+                            phongShader.SetInt(gl, "animate", 1);
+                            phongShader.SetUint(gl, "curTime", _startTime - (uint)frame_clock.FrameTime);
+                        }
                         phongShader.SetMatrix4(gl, "model", modelMatrix);
                         phongShader.SetMatrix4(gl, "view", viewMatrix);
                         phongShader.SetMatrix4(gl, "proj", projMatrix);
-                        phongShader.SetVec3(gl, "material.color", _material.Color);
                         phongShader.SetVec3(gl, "material.Ka", _material.Ka);
                         phongShader.SetVec3(gl, "material.Kd", _material.Kd);
                         phongShader.SetVec3(gl, "material.Ks", _material.Ks);
@@ -512,7 +541,9 @@ namespace lab4_5
                 if (_wireframe.Active)
                 {
                     gl.UseProgram(baseShader.Id);
-                    baseShader.SetVec3(gl, "color", LINE_COLOR);
+                    baseShader.SetInt(gl, "useSingleColor", 1);
+                    baseShader.SetVec3(gl, "singleColor", LINE_COLOR);
+                    baseShader.SetInt(gl, "animate", 0);
                     gl.LineWidth(2);
                     gl.PolygonMode(OpenGL.GL_FRONT_AND_BACK, OpenGL.GL_LINE);
                     gl.DrawElements(OpenGL.GL_TRIANGLES, elements.Length, OpenGL.GL_UNSIGNED_INT, IntPtr.Zero);
@@ -524,7 +555,9 @@ namespace lab4_5
                     normalsShader.SetMatrix4(gl, "model", modelMatrix);
                     normalsShader.SetMatrix4(gl, "view", viewMatrix);
                     normalsShader.SetMatrix4(gl, "proj", projMatrix);
-                    normalsShader.SetVec3(gl, "color", NORMAL_COLOR);
+                    normalsShader.SetInt(gl, "useSingleColor", 1);
+                    normalsShader.SetVec3(gl, "singleColor", NORMAL_COLOR);
+                    gl.LineWidth(2);
                     gl.DrawElements(OpenGL.GL_TRIANGLES, elements.Length, OpenGL.GL_UNSIGNED_INT, IntPtr.Zero);
                 }
 
@@ -534,6 +567,7 @@ namespace lab4_5
                     gl.UseProgram(baseShader.Id);
                     baseShader.SetMatrix4(gl, "model", Matrix4x4.Identity);
                     baseShader.SetVec3(gl, "color", Vector3.One);
+                    baseShader.SetInt(gl, "animate", 0);
                     gl.PointSize(10);
                     gl.DrawArrays(OpenGL.GL_POINTS, 0, 1);
                 }
