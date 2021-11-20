@@ -21,7 +21,7 @@ void main()
     normal = normalize(vec3(viewmodel * vec4(inNormal, 0.0)));
     fragCoord = vec3(viewmodel * vec4(position, 1.0));
     if (animate) {
-        color = sin(inColor + curTime / 3000000.0) / 2 + 0.5;
+        color = sin(asin(2.0 * inColor - 1.0) + float(curTime) / 3000000.0) * 0.5 + 0.5;
     } else {
         color = inColor;
     }

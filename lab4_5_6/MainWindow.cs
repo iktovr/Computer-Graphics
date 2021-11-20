@@ -1,7 +1,5 @@
 using System;
-using System.Diagnostics;
 using System.Numerics;
-using System.Text;
 using Gtk;
 using Gdk;
 using SharpGL;
@@ -9,7 +7,6 @@ using UI = Gtk.Builder.ObjectAttribute;
 
 using static Extensions.Extensions;
 using Primitives;
-using Action = Gtk.Action;
 using Window = Gtk.Window;
 
 namespace lab4_5_6
@@ -484,7 +481,7 @@ namespace lab4_5_6
                         if (_animation.Active)
                         {
                             baseShader.SetInt(gl, "animate", 1);
-                            baseShader.SetUint(gl, "curTime", _startTime - (uint)frame_clock.FrameTime);
+                            baseShader.SetUint(gl, "curTime", (uint)frame_clock.FrameTime - _startTime);
                         }
                     }
                     else if (_shading.Active == (int) Shading.Gouraud)
@@ -493,7 +490,7 @@ namespace lab4_5_6
                         if (_animation.Active)
                         {
                             gouraudShader.SetInt(gl, "animate", 1);
-                            gouraudShader.SetUint(gl, "curTime", _startTime - (uint)frame_clock.FrameTime);
+                            gouraudShader.SetUint(gl, "curTime", (uint)frame_clock.FrameTime - _startTime);
                         }
                         gouraudShader.SetInt(gl, "useSingleColor", 0);
                         gouraudShader.SetMatrix4(gl, "model", modelMatrix);
@@ -515,7 +512,7 @@ namespace lab4_5_6
                         if (_animation.Active)
                         {
                             phongShader.SetInt(gl, "animate", 1);
-                            phongShader.SetUint(gl, "curTime", _startTime - (uint)frame_clock.FrameTime);
+                            phongShader.SetUint(gl, "curTime", (uint)frame_clock.FrameTime - _startTime);
                         }
                         phongShader.SetMatrix4(gl, "model", modelMatrix);
                         phongShader.SetMatrix4(gl, "view", viewMatrix);
@@ -566,7 +563,8 @@ namespace lab4_5_6
                     gl.BindVertexArray(lightVao);
                     gl.UseProgram(baseShader.Id);
                     baseShader.SetMatrix4(gl, "model", Matrix4x4.Identity);
-                    baseShader.SetVec3(gl, "color", Vector3.One);
+                    baseShader.SetInt(gl, "useSingleColor", 1);
+                    baseShader.SetVec3(gl, "singleColor", Vector3.One);
                     baseShader.SetInt(gl, "animate", 0);
                     gl.PointSize(10);
                     gl.DrawArrays(OpenGL.GL_POINTS, 0, 1);

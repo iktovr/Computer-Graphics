@@ -5,6 +5,7 @@ using System.IO;
 using System.Numerics;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using SharpGL;
 using static Extensions.Extensions;
 
@@ -293,33 +294,37 @@ namespace Primitives
         public Shader(OpenGL gl, string vert, string frag, string geom = null)
         {
             var tmp = new int[1];
+            var txt = new StringBuilder(512);
             Id = gl.CreateProgram();
             uint vertId = gl.CreateShader(OpenGL.GL_VERTEX_SHADER);
             gl.ShaderSource(vertId, ReadFromRes(vert));
             gl.CompileShader(vertId);
+            gl.GetShaderInfoLog(vertId, 512, IntPtr.Zero, txt);
             gl.GetShader(vertId, OpenGL.GL_COMPILE_STATUS, tmp);
+            if (tmp[0] != OpenGL.GL_TRUE) Debug.WriteLine(txt);
             Debug.Assert(tmp[0] == OpenGL.GL_TRUE, "Vertex shader compilation failed");
             gl.AttachShader(Id, vertId);
-            // gl.DeleteShader(vertId);
 
             if (geom != null)
             {
                 uint geomId = gl.CreateShader(OpenGL.GL_GEOMETRY_SHADER);
                 gl.ShaderSource(geomId, ReadFromRes(geom));
                 gl.CompileShader(geomId);
+                gl.GetShaderInfoLog(vertId, 512, IntPtr.Zero, txt);
                 gl.GetShader(geomId, OpenGL.GL_COMPILE_STATUS, tmp);
+                if (tmp[0] != OpenGL.GL_TRUE) Debug.WriteLine(txt);
                 Debug.Assert(tmp[0] == OpenGL.GL_TRUE, "Geometrical Ssader compilation failed");
                 gl.AttachShader(Id, geomId);
-                // gl.DeleteShader(geomId);
             }
             
             uint fragId = gl.CreateShader(OpenGL.GL_FRAGMENT_SHADER);
             gl.ShaderSource(fragId, ReadFromRes(frag));
             gl.CompileShader(fragId);
+            gl.GetShaderInfoLog(vertId, 512, IntPtr.Zero, txt);
             gl.GetShader(fragId, OpenGL.GL_COMPILE_STATUS, tmp);
+            if (tmp[0] != OpenGL.GL_TRUE) Debug.WriteLine(txt);
             Debug.Assert(tmp[0] == OpenGL.GL_TRUE, "Fragment shader compilation failed");
             gl.AttachShader(Id, fragId);
-            // gl.DeleteShader(fragId);
             gl.LinkProgram(Id);
             
             gl.GetProgram(Id, OpenGL.GL_LINK_STATUS, tmp);

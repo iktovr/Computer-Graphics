@@ -57,7 +57,7 @@ void main()
     float attenuation = (1 + light.attenuation * distToLight * distToLight);
     
     if (animate) {
-        color = sin(inColor + curTime / 3000000.0) / 2 + 0.5;
+        color = sin(asin(2.0 * inColor - 1.0) + float(curTime) / 3000000.0) / 2 + 0.5;
     } else {
         color = inColor;
     }
