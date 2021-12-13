@@ -564,7 +564,7 @@ namespace lab4_5_6
                     gl.UseProgram(baseShader.Id);
                     baseShader.SetMatrix4(gl, "model", Matrix4x4.Identity);
                     baseShader.SetInt(gl, "useSingleColor", 1);
-                    baseShader.SetVec3(gl, "singleColor", Vector3.One);
+                    baseShader.SetVec3(gl, "singleColor", _pointLight.Intensity);
                     baseShader.SetInt(gl, "animate", 0);
                     gl.PointSize(10);
                     gl.DrawArrays(OpenGL.GL_POINTS, 0, 1);
