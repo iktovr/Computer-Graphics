@@ -10,8 +10,6 @@
         <EmbeddedResource Include="**\*.glade">
             <LogicalName>%(Filename)%(Extension)</LogicalName>
         </EmbeddedResource>
-        <EmbeddedResource Remove="CGPlatform\**" />
-        <None Remove="CGPlatform\**" />
         <None Remove="normals.glsl" />
         <EmbeddedResource Include="normals.glsl" />
         <None Remove="phong.frag" />
@@ -28,12 +26,8 @@
         <PackageReference Include="GtkSharp" Version="3.24.24.*" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Compile Remove="CGPlatform\**" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="CGPlatform\CGPlatform.csproj" />
+	<ItemGroup>
+      <ProjectReference Include="..\CGPlatform\CGPlatform.csproj" />
     </ItemGroup>
 
 </Project>
