@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net5.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Remove="**\*.glade" />
+        <EmbeddedResource Include="**\*.glade">
+            <LogicalName>%(Filename)%(Extension)</LogicalName>
+        </EmbeddedResource>
+        <None Remove="base.frag" />
+        <EmbeddedResource Include="base.frag" />
+        <None Remove="base.vert" />
+        <EmbeddedResource Include="base.vert" />
+        <None Remove="gouraud.vert" />
+        <EmbeddedResource Include="gouraud.vert" />
+        <None Remove="normals.glsl" />
+        <EmbeddedResource Include="normals.glsl" />
+        <None Remove="phong.frag" />
+        <EmbeddedResource Include="phong.frag" />
+        <None Remove="axies.vert" />
+        <EmbeddedResource Include="axies.vert" />
+        <None Remove="MainWindow.css" />
+        <EmbeddedResource Include="MainWindow.css" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="GtkSharp" Version="3.24.24.*" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\CGPlatform\CGPlatform.csproj" />
+    </ItemGroup>
+
+</Project>

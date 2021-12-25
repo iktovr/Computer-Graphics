@@ -1,0 +1,20 @@
+.l00 { color: rgb(255, 0, 0); }
+.l01 { color: rgb(255, 96, 0); }
+.l02 { color: rgb(255, 191, 0); }
+.l03 { color: rgb(223, 255, 0); }
+.l10 { color: rgb(128, 255, 0); }
+.l11 { color: rgb(32, 255, 0); }
+.l12 { color: rgb(0, 255, 64); }
+.l13 { color: rgb(0, 255, 159); }
+.l20 { color: rgb(0, 255, 255); }
+.l21 { color: rgb(0, 159, 255); }
+.l22 { color: rgb(0, 64, 255); }
+.l23 { color: rgb(32, 0, 255); }
+.l30 { color: rgb(128, 0, 255); }
+.l31 { color: rgb(223, 0, 255); }
+.l32 { color: rgb(255, 0, 191); }
+.l33 { color: rgb(255, 0, 96); }
+
+.l00, .l01, .l02, .l03, .l10, .l11, .l12, .l13, .l20, .l21, .l22, .l23, .l30, .l31, .l32, .l33 {
+    font-size: 15pt;
+}
