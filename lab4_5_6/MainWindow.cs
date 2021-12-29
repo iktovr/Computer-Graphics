@@ -404,7 +404,7 @@ namespace lab4_5_6
             gl.BindVertexArray(vao);
             gl.BindBuffer(OpenGL.GL_ARRAY_BUFFER, vbo);
             gl.BindBuffer(OpenGL.GL_ELEMENT_ARRAY_BUFFER, vio);
-            gl.VertexAttribPointer(0, 3, OpenGL.GL_FLOAT, true, 9 * sizeof(float), IntPtr.Zero);
+            gl.VertexAttribPointer(0, 3, OpenGL.GL_FLOAT, false, 9 * sizeof(float), IntPtr.Zero);
             gl.VertexAttribPointer(1, 3, OpenGL.GL_FLOAT, false, 9 * sizeof(float), (IntPtr)(3 * sizeof(float)));
             gl.VertexAttribPointer(2, 3, OpenGL.GL_FLOAT, false, 9 * sizeof(float), (IntPtr)(6 * sizeof(float)));
             gl.EnableVertexAttribArray(0);
@@ -416,7 +416,7 @@ namespace lab4_5_6
             uint lightVbo = buffers[2];
             gl.BindVertexArray(lightVao);
             gl.BindBuffer(OpenGL.GL_ARRAY_BUFFER, lightVbo);
-            gl.VertexAttribPointer(0, 3, OpenGL.GL_FLOAT, true, 0, IntPtr.Zero);
+            gl.VertexAttribPointer(0, 3, OpenGL.GL_FLOAT, false, 0, IntPtr.Zero);
             gl.EnableVertexAttribArray(0);
             gl.BindVertexArray(0);
             
@@ -455,7 +455,7 @@ namespace lab4_5_6
                 {
                     _modelChanged = false;
                     gl.BindVertexArray(vao);
-                    gl.BindBuffer(OpenGL.GL_ARRAY_BUFFER, vao);
+                    gl.BindBuffer(OpenGL.GL_ARRAY_BUFFER, vbo);
                     _object.ToArray(true, true, true, out vertices, out elements);
                     gl.BufferData(OpenGL.GL_ARRAY_BUFFER, vertices, OpenGL.GL_DYNAMIC_DRAW);
                     gl.BufferData(OpenGL.GL_ELEMENT_ARRAY_BUFFER, elements, OpenGL.GL_DYNAMIC_DRAW);
