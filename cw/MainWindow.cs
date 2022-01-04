@@ -822,7 +822,7 @@ namespace cw
             {
                 for (int j = 0; j < 4; ++j)
                 {
-                    var adj = new Adjustment(1, 0, 100, 1, 10, 10);
+                    var adj = new Adjustment(_surface.Weights[i,j], 0, 100, 1, 10, 10);
                     adj.ValueChanged += new WeightHandler(i, j, this).ValueChangedHandler;
                     _weightsAdjs[i, j] = adj;
                     Box box = new Box(Orientation.Horizontal, 2);
