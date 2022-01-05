@@ -263,15 +263,15 @@ namespace cw
             #endregion
 
             #region Object controls
-            _xAngle.ValueChanged += (_, _) => { _object.Rotation.X = (float) (_xAngle.Value / 180 * Math.PI); };
-            _yAngle.ValueChanged += (_, _) => { _object.Rotation.Y = (float) (_yAngle.Value / 180 * Math.PI); };
-            _zAngle.ValueChanged += (_, _) => { _object.Rotation.Z = (float) (_zAngle.Value / 180 * Math.PI); };
-            _xScale.ValueChanged += (_, _) => { _object.Scale.X = (float) _xScale.Value; };
-            _yScale.ValueChanged += (_, _) => { _object.Scale.Y = (float) _yScale.Value; };
-            _zScale.ValueChanged += (_, _) => { _object.Scale.Z = (float) _zScale.Value; };
-            _xShift.ValueChanged += (_, _) => { _object.Origin.X = (float) _xShift.Value; };
-            _yShift.ValueChanged += (_, _) => { _object.Origin.Y = (float) _yShift.Value; };
-            _zShift.ValueChanged += (_, _) => { _object.Origin.Z = (float) _zShift.Value; };
+            _xAngle.ValueChanged += (_, _) => { _object.Rotation.X = (float) (_xAngle.Value / 180 * Math.PI); _clipSpaceChanged = true; };
+            _yAngle.ValueChanged += (_, _) => { _object.Rotation.Y = (float) (_yAngle.Value / 180 * Math.PI); _clipSpaceChanged = true; };
+            _zAngle.ValueChanged += (_, _) => { _object.Rotation.Z = (float) (_zAngle.Value / 180 * Math.PI); _clipSpaceChanged = true; };
+            _xScale.ValueChanged += (_, _) => { _object.Scale.X = (float) _xScale.Value; _clipSpaceChanged = true; };
+            _yScale.ValueChanged += (_, _) => { _object.Scale.Y = (float) _yScale.Value; _clipSpaceChanged = true; };
+            _zScale.ValueChanged += (_, _) => { _object.Scale.Z = (float) _zScale.Value; _clipSpaceChanged = true; };
+            _xShift.ValueChanged += (_, _) => { _object.Origin.X = (float) _xShift.Value; _clipSpaceChanged = true; };
+            _yShift.ValueChanged += (_, _) => { _object.Origin.Y = (float) _yShift.Value; _clipSpaceChanged = true; };
+            _zShift.ValueChanged += (_, _) => { _object.Origin.Z = (float) _zShift.Value; _clipSpaceChanged = true; };
             #endregion
             
             #region Material and light controls
@@ -488,7 +488,7 @@ namespace cw
                     gl.BindVertexArray(meshVao);
                     gl.BindBuffer(OpenGL.GL_ARRAY_BUFFER, meshVbo);
                     _surface.GenerateMesh(ref _object, (int)_uCount.Value, (int)_vCount.Value, _material);
-                    _surface.CalculateClipSpacePoints(viewMatrix, projMatrix);
+                    _surface.CalculateClipSpacePoints(modelMatrix, viewMatrix, projMatrix);
                     _object.ToArray(true, true, true, out vertices, out elements);
                     gl.BufferData(OpenGL.GL_ARRAY_BUFFER, vertices, OpenGL.GL_DYNAMIC_DRAW);
                     gl.BufferData(OpenGL.GL_ELEMENT_ARRAY_BUFFER, elements, OpenGL.GL_DYNAMIC_DRAW);
@@ -665,7 +665,7 @@ namespace cw
             if (_clipSpaceChanged)
             {
                 _clipSpaceChanged = false;
-                _surface.CalculateClipSpacePoints(AutoScale() * _camera.GetViewMatrix(), _camera.GetProjectionMatrix());
+                _surface.CalculateClipSpacePoints(_object.GetModelMatrix(), AutoScale() * _camera.GetViewMatrix(), _camera.GetProjectionMatrix());
             }
             // left button on point - move
             if (_pointerButton == 1 && (_drawPoints.Active || _drawSurface.Active))
@@ -686,7 +686,7 @@ namespace cw
             if (_clipSpaceChanged)
             {
                 _clipSpaceChanged = false;
-                _surface.CalculateClipSpacePoints(AutoScale() * _camera.GetViewMatrix(), _camera.GetProjectionMatrix());
+                _surface.CalculateClipSpacePoints(_object.GetModelMatrix(), AutoScale() * _camera.GetViewMatrix(), _camera.GetProjectionMatrix());
             }
             
             Vector2 pointerPos = new Vector2((float) args.Event.X / _glArea.AllocatedWidth * 2 - 1,

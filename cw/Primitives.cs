@@ -125,9 +125,9 @@ namespace Primitives
             mesh.CalculateVerticesNormals();
         }
 
-        public void CalculateClipSpacePoints(Matrix4x4 viewMatrix, Matrix4x4 projMatrix)
+        public void CalculateClipSpacePoints(Matrix4x4 modelMatrix, Matrix4x4 viewMatrix, Matrix4x4 projMatrix)
         {
-            Matrix4x4 transformMatrix = Matrix4x4.Transpose(projMatrix * viewMatrix);
+            Matrix4x4 transformMatrix = Matrix4x4.Transpose(projMatrix * viewMatrix * modelMatrix);
             for (int i = 0; i < 4; ++i)
             {
                 for (int j = 0; j < 4; ++j)
